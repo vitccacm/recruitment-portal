@@ -1,0 +1,63 @@
+{% extends "dept/base.html" %}
+{% block title %}Rounds{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Recruitment <span class="gradient-text">Rounds</span></h1>
+    <p class="page-subtitle">Manage shortlisting rounds for your department</p>
+</div>
+
+{% if rounds_data %}
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+    {% for rd in rounds_data %}
+    <div class="glass-card">
+        <div class="flex justify-between items-center mb-md">
+            <h3 style="margin: 0;">{{ rd.round.name }}</h3>
+            {% if rd.state.is_locked %}
+            <span class="badge badge-ended">Locked</span>
+            {% else %}
+            <span class="badge badge-open">Open</span>
+            {% endif %}
+        </div>
+
+        {% if rd.round.description %}
+        <p class="text-muted mb-md" style="font-size: 0.85rem;">{{ rd.round.description[:80] }}{% if
+            rd.round.description|length > 80 %}...{% endif %}</p>
+        {% endif %}
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem;">
+            <div>
+                <span class="text-muted" style="font-size: 0.75rem;">PREREQUISITE</span><br>
+                <strong>{{ rd.round.prerequisite.name if rd.round.prerequisite else 'None' }}</strong>
+            </div>
+            <div>
+                <span class="text-muted" style="font-size: 0.75rem;">SELECTED</span><br>
+                <strong><span class="gradient-text">{{ rd.selected }}</span> / {{ rd.total }}</strong>
+            </div>
+        </div>
+
+        <div class="flex gap-sm mb-md">
+            <div
+                style="flex: 1; text-align: center; padding: 0.5rem; background: var(--glass-bg); border-radius: 0.5rem;">
+                <span class="text-muted" style="font-size: 0.7rem;">RESULTS</span><br>
+                {% if rd.state.results_released %}
+                <span class="badge badge-open" style="margin-top: 0.25rem;">Released</span>
+                {% else %}
+                <span class="badge badge-pending" style="margin-top: 0.25rem;">Hidden</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <a href="{{ url_for('dept.round_detail', round_id=rd.round.id) }}" class="btn btn-primary" style="width: 100%;">
+            {% if rd.state.is_locked %}View Candidates{% else %}Select Candidates{% endif %}
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="glass-card text-center" style="max-width: 400px; margin: 0 auto;">
+    <h3>No Rounds Available</h3>
+    <p class="text-muted mt-md">Rounds will appear here once created by the super admin.</p>
+</div>
+{% endif %}
+{% endblock %}

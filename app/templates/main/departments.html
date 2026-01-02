@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Departments{% endblock %}
+
+{% block content %}
+<section class="page">
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Our <span class="gradient-text">Departments</span></h1>
+            <p class="page-subtitle">Explore all the teams at ACM VIT Chennai and find where you belong</p>
+        </div>
+
+        {% if departments %}
+        <div class="dept-grid">
+            {% for dept in departments %}
+            <a href="{{ url_for('main.department_detail', dept_id=dept.id) }}" class="dept-card"
+                style="text-decoration: none;">
+                {% if dept.image_path %}
+                <img src="{{ url_for('static', filename=dept.image_path) }}" alt="{{ dept.name }}"
+                    class="dept-card-img">
+                {% else %}
+                <div class="dept-card-img"
+                    style="background: linear-gradient(135deg, var(--acm-blue) 0%, var(--acm-blue-dark) 100%); display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 3rem; opacity: 0.3;"></span>
+                </div>
+                {% endif %}
+                <div class="dept-card-body">
+                    <h3 class="dept-card-title">{{ dept.name }}</h3>
+                    <p class="dept-card-desc">{{ dept.short_description or 'Join our team and make an impact!' }}</p>
+                    <div class="dept-card-footer">
+                        {% if dept.recruitment_status == 'open' %}
+                        <span class="badge badge-open">● Open for Applications</span>
+                        {% elif dept.recruitment_status == 'upcoming' %}
+                        <span class="badge badge-upcoming">◷ Starting Soon</span>
+                        {% else %}
+                        <span class="badge badge-ended">● Applications Closed</span>
+                        {% endif %}
+                        <span class="text-muted" style="font-size: 0.85rem;">View Details →</span>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="glass-card text-center" style="max-width: 500px; margin: 0 auto;">
+            <h3>No Departments Yet</h3>
+            <p class="text-muted mt-md">Check back later for open positions!</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

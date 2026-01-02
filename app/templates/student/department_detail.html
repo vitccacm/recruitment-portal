@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}{{ department.name }}{% endblock %}
+
+{% block content %}
+<section class="page">
+    <div class="container" style="max-width: 900px;">
+        <a href="{{ url_for('student.departments') }}" class="btn btn-secondary btn-sm mb-lg">← Back to Departments</a>
+
+        <!-- Department Header -->
+        <div class="glass-card mb-xl">
+            {% if department.image_path %}
+            <img src="{{ url_for('static', filename=department.image_path) }}" alt="{{ department.name }}"
+                style="width: 100%; height: 300px; object-fit: cover; border-radius: var(--radius-lg); margin-bottom: var(--space-xl);">
+            {% endif %}
+
+            <div class="flex justify-between items-center" style="flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h1>{{ department.name }}</h1>
+                    <p class="text-muted">{{ department.short_description }}</p>
+                </div>
+                <div>
+                    {% if existing_application %}
+                    <span class="badge badge-{{ existing_application.status }}"
+                        style="font-size: 0.9rem; padding: 0.5rem 1rem;">
+                        {{ existing_application.status|capitalize }}
+                    </span>
+                    {% elif department.is_accepting_applications %}
+                    <span class="badge badge-open" style="font-size: 0.9rem; padding: 0.5rem 1rem;">● Open</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Description -->
+        {% if department.description %}
+        <div class="card mb-xl">
+            <h3 class="mb-lg">About This Department</h3>
+            <div style="white-space: pre-wrap; color: var(--text-secondary);">{{ department.description }}</div>
+        </div>
+        {% endif %}
+
+        <!-- Positions -->
+        {% if department.positions %}
+        <div class="card mb-xl">
+            <h3 class="mb-lg">Available Positions</h3>
+            <div class="flex gap-sm" style="flex-wrap: wrap;">
+                {% for position in department.positions.split(',') %}
+                <span class="badge"
+                    style="background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);">
+                    {{ position.strip() }}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Requirements -->
+        {% if department.requirements %}
+        <div class="card mb-xl">
+            <h3 class="mb-lg">Requirements</h3>
+            <div style="white-space: pre-wrap; color: var(--text-secondary);">{{ department.requirements }}</div>
+        </div>
+        {% endif %}
+
+        <!-- Apply Section -->
+        <div class="text-center mt-xl">
+            {% if existing_application %}
+            <div class="glass-card" style="max-width: 400px; margin: 0 auto;">
+                <h3 class="mb-md">You've Already Applied!</h3>
+                <p class="text-muted">Status: <span class="badge badge-{{ existing_application.status }}">{{
+                        existing_application.status|capitalize }}</span></p>
+                <p class="text-muted mt-md">Applied on {{ existing_application.applied_at.strftime('%B %d, %Y') }}</p>
+            </div>
+            {% elif not current_user.can_apply %}
+            <a href="{{ url_for('student.profile') }}" class="btn btn-warning btn-lg">Complete Profile First</a>
+            <p class="text-muted mt-md">You need at least 75% profile completion to apply</p>
+            {% elif department.is_accepting_applications %}
+            <a href="{{ url_for('student.apply', dept_id=department.id) }}" class="btn btn-primary btn-lg">Apply Now
+                →</a>
+            {% else %}
+            <button class="btn btn-secondary btn-lg" disabled>Applications Closed</button>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}

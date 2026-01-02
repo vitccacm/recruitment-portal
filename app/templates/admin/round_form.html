@@ -1,0 +1,66 @@
+{% extends "admin/base.html" %}
+{% block title %}{% if round %}Edit Round{% else %}Add Round{% endif %}{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('admin.rounds') }}" class="btn btn-secondary btn-sm mb-lg">Back to Rounds</a>
+
+<div class="glass-card" style="max-width: 600px;">
+    <div class="mb-xl">
+        <h1>{% if round %}Edit{% else %}Add{% endif %} <span class="gradient-text">Round</span></h1>
+        <p class="text-muted">{% if round %}Update round settings{% else %}Create a new recruitment round{% endif %}</p>
+    </div>
+
+    <form method="POST"
+        action="{% if round %}{{ url_for('admin.edit_round', round_id=round.id) }}{% else %}{{ url_for('admin.add_round') }}{% endif %}">
+        {{ form.hidden_tag() }}
+
+        <div class="form-group">
+            <label class="form-label">Round Name *</label>
+            {{ form.name(class="form-control", placeholder="e.g., Shortlist Round 1") }}
+            {% for error in form.name.errors %}
+            <p class="form-error">{{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Description</label>
+            {{ form.description(class="form-control", placeholder="Optional description for this round") }}
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Prerequisite Round</label>
+            {{ form.prerequisite_id(class="form-control") }}
+            <p class="text-muted mt-sm" style="font-size: 0.8rem;">Only candidates who passed the prerequisite can be in
+                this round</p>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Display Order</label>
+            {{ form.order(class="form-control", placeholder="0", style="max-width: 100px;") }}
+        </div>
+
+        <div class="form-group">
+            <label class="switch">
+                {{ form.is_visible_before_results() }}
+                <span class="switch-slider"></span>
+            </label>
+            <span style="margin-left: 1rem;">Show to applicants before results release</span>
+        </div>
+
+        <div class="flex gap-md mt-xl">
+            <button type="submit" class="btn btn-primary btn-lg" style="flex: 1;">
+                {% if round %}Update Round{% else %}Create Round{% endif %}
+            </button>
+            <a href="{{ url_for('admin.rounds') }}" class="btn btn-secondary btn-lg">Cancel</a>
+        </div>
+    </form>
+
+    {% if round %}
+    <hr style="border-color: var(--border-color); margin: 2rem 0;">
+    <form method="POST" action="{{ url_for('admin.delete_round', round_id=round.id) }}"
+        onsubmit="return confirm('Are you sure you want to delete this round? This cannot be undone.');">
+        <button type="submit" class="btn btn-danger">Delete Round</button>
+    </form>
+    {% endif %}
+</div>
+{% endblock %}

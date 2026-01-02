@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Apply - {{ department.name }}{% endblock %}
+
+{% block content %}
+<section class="page">
+    <div class="container" style="max-width: 600px;">
+        <a href="{{ url_for('student.department_detail', dept_id=department.id) }}"
+            class="btn btn-secondary btn-sm mb-lg">← Back</a>
+
+        <div class="glass-card">
+            <div class="text-center mb-xl">
+                <h1>Apply to <span class="gradient-text">{{ department.name }}</span></h1>
+                <p class="text-muted">Complete your application below</p>
+            </div>
+
+            <form method="POST" action="{{ url_for('student.apply', dept_id=department.id) }}"
+                enctype="multipart/form-data">
+                {{ form.hidden_tag() }}
+
+                <div class="form-group">
+                    <label class="form-label">Position *</label>
+                    {{ form.position(class="form-control") }}
+                    {% for error in form.position.errors %}
+                    <p class="form-error">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Why do you want to join? (Optional)</label>
+                    {{ form.cover_letter(class="form-control", placeholder="Tell us about yourself and why you'd be a
+                    great fit...") }}
+                </div>
+
+                <!-- Custom Questions -->
+                {% if questions %}
+                <h4 class="mb-md mt-xl" style="border-top: 1px solid var(--border-color); padding-top: 1rem;">Additional
+                    Questions</h4>
+
+                {% for q in questions %}
+                <div class="form-group">
+                    <label class="form-label">{{ q.question_text }}{% if q.is_required %} *{% endif %}</label>
+
+                    {% if q.question_type == 'text' %}
+                    <input type="text" name="question_{{ q.id }}" class="form-control" {% if q.is_required %}required{%
+                        endif %}>
+
+                    {% elif q.question_type == 'textarea' %}
+                    <textarea name="question_{{ q.id }}" class="form-control" rows="3" {% if q.is_required %}required{%
+                        endif %}></textarea>
+
+                    {% elif q.question_type == 'link' %}
+                    <input type="url" name="question_{{ q.id }}" class="form-control" placeholder="https://" {% if
+                        q.is_required %}required{% endif %}>
+
+                    {% elif q.question_type == 'single_choice' %}
+                    {% for opt in q.options.split(',') %}
+                    <label class="flex gap-sm items-center mb-sm">
+                        <input type="radio" name="question_{{ q.id }}" value="{{ opt.strip() }}" {% if q.is_required
+                            %}required{% endif %}>
+                        <span>{{ opt.strip() }}</span>
+                    </label>
+                    {% endfor %}
+
+                    {% elif q.question_type == 'multiple_choice' %}
+                    {% for opt in q.options.split(',') %}
+                    <label class="flex gap-sm items-center mb-sm">
+                        <input type="checkbox" name="question_{{ q.id }}" value="{{ opt.strip() }}">
+                        <span>{{ opt.strip() }}</span>
+                    </label>
+                    {% endfor %}
+
+                    {% elif q.question_type == 'file_upload' %}
+                    <input type="file" name="question_{{ q.id }}" class="form-control"
+                        accept=".{{ q.allowed_extensions.replace(',', ',.') }}" {% if q.is_required %}required{% endif
+                        %}>
+                    <p class="text-muted mt-sm" style="font-size: 0.75rem;">
+                        Allowed: {{ q.allowed_extensions }} | Max: {{ q.file_max_size }}KB
+                    </p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                <!-- Application Summary -->
+                <div class="card mb-xl mt-lg" style="background: var(--bg-secondary);">
+                    <h4 class="mb-md">Application Summary</h4>
+                    <p class="text-muted"><strong>Name:</strong> {{ current_user.name }}</p>
+                    <p class="text-muted"><strong>Email:</strong> {{ current_user.email }}</p>
+                    <p class="text-muted"><strong>Reg No:</strong> {{ current_user.reg_no }}</p>
+                    <p class="text-muted"><strong>Branch:</strong> {{ current_user.branch }}</p>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">Submit Application</button>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

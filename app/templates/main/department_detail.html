@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% block title %}{{ department.name }}{% endblock %}
+
+{% block content %}
+<section class="page">
+    <div class="container" style="max-width: 900px;">
+        <!-- Back Link -->
+        <a href="{{ url_for('main.departments') }}" class="btn btn-secondary btn-sm mb-lg"
+            style="text-decoration: none;">
+            ← Back to Departments
+        </a>
+
+        <!-- Department Header -->
+        <div class="glass-card mb-xl">
+            {% if department.image_path %}
+            <img src="{{ url_for('static', filename=department.image_path) }}" alt="{{ department.name }}"
+                style="width: 100%; height: 300px; object-fit: cover; border-radius: var(--radius-lg); margin-bottom: var(--space-xl);">
+            {% else %}
+            <div
+                style="width: 100%; height: 200px; background: linear-gradient(135deg, var(--acm-blue) 0%, var(--acm-blue-dark) 100%); border-radius: var(--radius-lg); margin-bottom: var(--space-xl); display: flex; align-items: center; justify-content: center;">
+                <span style="font-size: 5rem; opacity: 0.3;"></span>
+            </div>
+            {% endif %}
+
+            <div class="flex justify-between items-center" style="flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h1 style="margin-bottom: 0.5rem;">{{ department.name }}</h1>
+                    <p class="text-muted">{{ department.short_description or 'ACM VIT Chennai' }}</p>
+                </div>
+                <div>
+                    {% if department.recruitment_status == 'open' %}
+                    <span class="badge badge-open" style="font-size: 0.9rem; padding: 0.5rem 1rem;">● Open for
+                        Applications</span>
+                    {% elif department.recruitment_status == 'upcoming' %}
+                    <span class="badge badge-upcoming" style="font-size: 0.9rem; padding: 0.5rem 1rem;">◷ Coming
+                        Soon</span>
+                    {% else %}
+                    <span class="badge badge-ended" style="font-size: 0.9rem; padding: 0.5rem 1rem;">● Applications
+                        Closed</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recruitment Timeline -->
+        {% if department.recruitment_start or department.recruitment_end %}
+        <div class="card mb-xl">
+            <h3 class="mb-lg">Recruitment Timeline</h3>
+            <div class="flex gap-lg" style="flex-wrap: wrap;">
+                {% if department.recruitment_start %}
+                <div>
+                    <span class="text-muted">Starts:</span>
+                    <strong>{{ department.recruitment_start.strftime('%B %d, %Y at %I:%M %p') }}</strong>
+                </div>
+                {% endif %}
+                {% if department.recruitment_end %}
+                <div>
+                    <span class="text-muted">Ends:</span>
+                    <strong>{{ department.recruitment_end.strftime('%B %d, %Y at %I:%M %p') }}</strong>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if department.recruitment_status == 'upcoming' and department.recruitment_start %}
+            <div class="mt-lg">
+                <p class="text-muted mb-md">Recruitment starts in:</p>
+                <div class="countdown" id="countdown" data-target="{{ department.recruitment_start.isoformat() }}">
+                    <div class="countdown-item">
+                        <div class="countdown-value" id="days">--</div>
+                        <div class="countdown-label">Days</div>
+                    </div>
+                    <div class="countdown-item">
+                        <div class="countdown-value" id="hours">--</div>
+                        <div class="countdown-label">Hours</div>
+                    </div>
+                    <div class="countdown-item">
+                        <div class="countdown-value" id="minutes">--</div>
+                        <div class="countdown-label">Minutes</div>
+                    </div>
+                    <div class="countdown-item">
+                        <div class="countdown-value" id="seconds">--</div>
+                        <div class="countdown-label">Seconds</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if department.recruitment_status == 'open' and department.recruitment_end %}
+            <div class="mt-lg">
+                <p class="text-muted mb-md">Applications close in:</p>
+                <div class="countdown" id="countdown" data-target="{{ department.recruitment_end.isoformat() }}">
+                    <div class="countdown-item">
+                        <div class="countdown-value" id="days">--</div>
+                        <div class="countdown-label">Days</div>
+                    </div>
+                    <div class="countdown-item">
+                        <div class="countdown-value" id="hours">--</div>
+                        <div class="countdown-label">Hours</div>
+                    </div>
+                    <div class="countdown-item">
+                        <div class="countdown-value" id="minutes">--</div>
+                        <div class="countdown-label">Minutes</div>
+                    </div>
+                    <div class="countdown-item">
+                        <div class="countdown-value" id="seconds">--</div>
+                        <div class="countdown-label">Seconds</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Description -->
+        {% if department.description %}
+        <div class="card mb-xl">
+            <h3 class="mb-lg">About This Department</h3>
+            <div style="white-space: pre-wrap; color: var(--text-secondary); line-height: 1.8;">{{
+                department.description }}</div>
+        </div>
+        {% endif %}
+
+        <!-- Positions -->
+        {% if department.positions %}
+        <div class="card mb-xl">
+            <h3 class="mb-lg">Available Positions</h3>
+            <div class="flex gap-sm" style="flex-wrap: wrap;">
+                {% for position in department.positions.split(',') %}
+                <span class="badge"
+                    style="background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border-color);">
+                    {{ position.strip() }}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Requirements -->
+        {% if department.requirements %}
+        <div class="card mb-xl">
+            <h3 class="mb-lg">Requirements</h3>
+            <div style="white-space: pre-wrap; color: var(--text-secondary); line-height: 1.8;">{{
+                department.requirements }}</div>
+        </div>
+        {% endif %}
+
+        <!-- Apply Button -->
+        <div class="text-center mt-xl">
+            {% if department.is_accepting_applications %}
+            {% if current_user.is_authenticated %}
+            <a href="{{ url_for('student.apply', dept_id=department.id) }}" class="btn btn-primary btn-lg">
+                Apply Now →
+            </a>
+            {% else %}
+            <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg">
+                Sign In to Apply
+            </a>
+            <p class="text-muted mt-md">You need to be logged in to apply</p>
+            {% endif %}
+            {% else %}
+            <button class="btn btn-secondary btn-lg" disabled>
+                {% if department.recruitment_status == 'upcoming' %}
+                Applications Not Yet Open
+                {% else %}
+                Applications Closed
+                {% endif %}
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Countdown timer
+    const countdown = document.getElementById('countdown');
+    if (countdown) {
+        const target = new Date(countdown.dataset.target).getTime();
+
+        const timer = setInterval(() => {
+            const now = Date.now();
+            const diff = target - now;
+
+            if (diff <= 0) {
+                clearInterval(timer);
+                location.reload();
+                return;
+            }
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+            document.getElementById('days').textContent = days.toString().padStart(2, '0');
+            document.getElementById('hours').textContent = hours.toString().padStart(2, '0');
+            document.getElementById('minutes').textContent = minutes.toString().padStart(2, '0');
+            document.getElementById('seconds').textContent = seconds.toString().padStart(2, '0');
+        }, 1000);
+    }
+</script>
+{% endblock %}

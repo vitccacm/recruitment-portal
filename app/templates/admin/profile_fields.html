@@ -1,0 +1,58 @@
+{% extends "admin/base.html" %}
+{% block title %}Profile Fields{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-xl">
+    <div>
+        <h1 class="page-title">Profile <span class="gradient-text">Fields</span></h1>
+        <p class="page-subtitle">Customize what information students fill in their profile</p>
+    </div>
+    <a href="{{ url_for('admin.add_profile_field') }}" class="btn btn-primary">+ Add Field</a>
+</div>
+
+{% if fields %}
+<div style="display: grid; gap: 1rem;">
+    {% for field in fields %}
+    <div class="glass-card" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="flex: 1;">
+            <div class="flex gap-sm items-center">
+                <strong>{{ field.label }}</strong>
+                <span class="badge badge-pending" style="font-size: 0.7rem;">{{ field.field_type }}</span>
+                {% if field.is_required %}
+                <span class="badge badge-ended" style="font-size: 0.7rem;">Required</span>
+                {% endif %}
+                {% if not field.is_enabled %}
+                <span class="badge badge-pending" style="font-size: 0.7rem;">Disabled</span>
+                {% endif %}
+            </div>
+            <p class="text-muted mt-sm" style="font-size: 0.8rem;">
+                Field: <code>{{ field.field_name }}</code> | Order: {{ field.order }}
+                {% if field.options %}| Options: {{ field.options[:50] }}{% if field.options|length > 50 %}...{% endif
+                %}{% endif %}
+            </p>
+        </div>
+        <div class="flex gap-sm">
+            <a href="{{ url_for('admin.edit_profile_field', field_id=field.id) }}"
+                class="btn btn-secondary btn-sm">Edit</a>
+            <form method="POST" action="{{ url_for('admin.delete_profile_field', field_id=field.id) }}"
+                onsubmit="return confirm('Delete this field?');" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="glass-card text-center" style="max-width: 400px; margin: 0 auto;">
+    <h3>No Custom Fields</h3>
+    <p class="text-muted mt-md">Add fields to customize student profiles</p>
+    <a href="{{ url_for('admin.add_profile_field') }}" class="btn btn-primary mt-lg">+ Add Field</a>
+</div>
+{% endif %}
+
+<div class="alert alert-info mt-xl" style="position: static;">
+    <strong>Note:</strong> Default fields (Name, Email, Reg No, Batch, Phone, Branch) are always included.
+    Custom fields appear after these.
+</div>
+{% endblock %}

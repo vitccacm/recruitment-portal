@@ -1,0 +1,89 @@
+{% extends "dept/base.html" %}
+{% block title %}{{ 'Edit' if question else 'Add' }} Question{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('dept.questions') }}" class="btn btn-secondary btn-sm mb-lg">Back to Questions</a>
+
+<div class="page-header">
+    <h1 class="page-title">{{ 'Edit' if question else 'Add' }} <span class="gradient-text">Question</span></h1>
+</div>
+
+<div class="glass-card" style="max-width: 600px;">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group">
+            <label class="form-label">Question Text</label>
+            <textarea name="question_text" class="form-control" rows="3" required
+                placeholder="e.g., Why do you want to join our department?">{{ question.question_text if question else '' }}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Question Type</label>
+            <select name="question_type" class="form-control" id="questionType" onchange="toggleOptions()">
+                <option value="text" {% if question and question.question_type=='text' %}selected{% endif %}>Short Text
+                </option>
+                <option value="textarea" {% if question and question.question_type=='textarea' %}selected{% endif %}>
+                    Long Text</option>
+                <option value="single_choice" {% if question and question.question_type=='single_choice' %}selected{%
+                    endif %}>Single Choice (Radio)</option>
+                <option value="multiple_choice" {% if question and question.question_type=='multiple_choice'
+                    %}selected{% endif %}>Multiple Choice (Checkboxes)</option>
+                <option value="file_upload" {% if question and question.question_type=='file_upload' %}selected{% endif
+                    %}>File Upload</option>
+                <option value="link" {% if question and question.question_type=='link' %}selected{% endif %}>URL/Link
+                </option>
+            </select>
+        </div>
+
+        <div class="form-group" id="optionsGroup">
+            <label class="form-label">Options (for choice questions)</label>
+            <input type="text" name="options" class="form-control" value="{{ question.options if question else '' }}"
+                placeholder="Option1, Option2, Option3">
+            <p class="text-muted mt-sm" style="font-size: 0.75rem;">Comma-separated list of choices</p>
+        </div>
+
+        <div class="form-group" id="fileGroup" style="display: none;">
+            <div class="flex gap-md">
+                <div style="flex: 1;">
+                    <label class="form-label">Max File Size (KB)</label>
+                    <input type="number" name="file_max_size" class="form-control"
+                        value="{{ question.file_max_size if question else 1024 }}" min="1" max="10240">
+                </div>
+                <div style="flex: 1;">
+                    <label class="form-label">Allowed Extensions</label>
+                    <input type="text" name="allowed_extensions" class="form-control"
+                        value="{{ question.allowed_extensions if question else 'pdf' }}" placeholder="pdf, doc, docx">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Order</label>
+            <input type="number" name="order" class="form-control" value="{{ question.order if question else 0 }}"
+                min="0">
+        </div>
+
+        <div class="form-group">
+            <label class="flex gap-sm items-center">
+                <input type="checkbox" name="is_required" {% if question and question.is_required %}checked{% endif %}>
+                <span>Required (applicant must answer)</span>
+            </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg">{{ 'Update' if question else 'Create' }} Question</button>
+    </form>
+</div>
+
+<script>
+    function toggleOptions() {
+        const type = document.getElementById('questionType').value;
+        const optionsGroup = document.getElementById('optionsGroup');
+        const fileGroup = document.getElementById('fileGroup');
+
+        optionsGroup.style.display = (type === 'single_choice' || type === 'multiple_choice') ? 'block' : 'none';
+        fileGroup.style.display = (type === 'file_upload') ? 'block' : 'none';
+    }
+    toggleOptions();
+</script>
+{% endblock %}

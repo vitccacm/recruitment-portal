@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | ACM Recruitment</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <section class="hero" style="min-height: 100vh;">
+        <div class="container-sm">
+            <div class="glass-card" style="max-width: 400px; margin: 0 auto;">
+                <div class="text-center mb-xl">
+                    <h1><span class="gradient-text">Admin</span> Portal</h1>
+                    <p class="text-muted">Sign in to manage the recruitment portal</p>
+                </div>
+
+                <form method="POST" action="{{ url_for('admin.login') }}">
+                    {{ form.hidden_tag() }}
+
+                    <div class="form-group">
+                        <label class="form-label">Email / Username</label>
+                        {{ form.email(class="form-control", placeholder="Enter your email") }}
+                        {% for error in form.email.errors %}
+                        <p class="form-error">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Password</label>
+                        {{ form.password(class="form-control", placeholder="Enter your password") }}
+                        {% for error in form.password.errors %}
+                        <p class="form-error">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">Sign In</button>
+                </form>
+
+                <div class="text-center mt-xl">
+                    <a href="{{ url_for('main.index') }}" class="text-muted">← Back to Home</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-messages">
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}">{{ message }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+</body>
+
+</html>

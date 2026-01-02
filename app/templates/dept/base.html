@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dept Admin{% endblock %} | ACM Recruitment</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <div class="admin-layout">
+        <!-- Sidebar -->
+        <aside class="admin-sidebar">
+            <a href="{{ url_for('dept.dashboard') }}" class="sidebar-brand">
+                <span class="gradient-text">ACM</span> Dept
+            </a>
+
+            <nav>
+                <ul class="sidebar-nav">
+                    <li>
+                        <a href="{{ url_for('dept.dashboard') }}" {% if request.endpoint=='dept.dashboard'
+                            %}class="active" {% endif %}>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('dept.applications') }}" {% if request.endpoint=='dept.applications'
+                            %}class="active" {% endif %}>
+                            Applications
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('dept.view_department') }}" {% if 'department' in request.endpoint
+                            %}class="active" {% endif %}>
+                            Department
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('dept.rounds') }}" {% if 'round' in request.endpoint %}class="active" {%
+                            endif %}>
+                            Rounds
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('dept.questions') }}" {% if 'question' in request.endpoint %}class="active"
+                            {% endif %}>
+                            Questions
+                        </a>
+                    </li>
+                    <li style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                        <a href="{{ url_for('main.index') }}">
+                            View Site
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('admin.logout') }}">
+                            Logout
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-content">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flash-messages" style="position: static; margin-bottom: 1.5rem;">
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

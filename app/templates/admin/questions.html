@@ -1,0 +1,36 @@
+{% extends "admin/base.html" %}
+{% block title %}Manage Questions{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Department <span class="gradient-text">Questions</span></h1>
+    <p class="page-subtitle">Select a department to manage its application questions</p>
+</div>
+
+{% if departments %}
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem;">
+    {% for dept in departments %}
+    <a href="{{ url_for('admin.dept_questions', dept_id=dept.id) }}" class="glass-card"
+        style="text-decoration: none; color: inherit; transition: transform 0.2s, box-shadow 0.2s;">
+        <div class="flex justify-between items-center mb-md">
+            <h3 style="margin: 0;">{{ dept.name }}</h3>
+            <span class="badge badge-pending">{{ dept.custom_questions|length }} Q</span>
+        </div>
+        {% if dept.short_description %}
+        <p class="text-muted" style="font-size: 0.85rem;">{{ dept.short_description[:80] }}{% if
+            dept.short_description|length > 80 %}...{% endif %}</p>
+        {% endif %}
+        <div class="mt-md">
+            <span class="btn btn-primary btn-sm">Manage Questions →</span>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="glass-card text-center" style="max-width: 400px; margin: 0 auto;">
+    <h3>No Departments</h3>
+    <p class="text-muted mt-md">Create departments first to manage their questions.</p>
+    <a href="{{ url_for('admin.add_department') }}" class="btn btn-primary mt-lg">+ Add Department</a>
+</div>
+{% endif %}
+{% endblock %}

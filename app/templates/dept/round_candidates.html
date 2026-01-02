@@ -1,0 +1,169 @@
+{% extends "dept/base.html" %}
+{% block title %}{{ round.name }}{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('dept.rounds') }}" class="btn btn-secondary btn-sm mb-lg">Back to Rounds</a>
+
+<div class="flex justify-between items-center mb-xl">
+    <div>
+        <h1 class="page-title"><span class="gradient-text">{{ round.name }}</span></h1>
+        <p class="page-subtitle">{{ round.description or 'Select eligible candidates for this round' }}</p>
+    </div>
+</div>
+
+<!-- Round Info -->
+<div class="card mb-xl">
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+        <div>
+            <strong>Prerequisite:</strong><br>
+            <span class="text-muted">{{ round.prerequisite.name if round.prerequisite else 'None' }}</span>
+        </div>
+        <div>
+            <strong>Status:</strong><br>
+            {% if state.is_locked %}
+            <span class="badge badge-ended">Locked</span>
+            {% else %}
+            <span class="badge badge-open">Open for Editing</span>
+            {% endif %}
+        </div>
+        <div>
+            <strong>Results:</strong><br>
+            {% if state.results_released %}
+            <span class="badge badge-open">Released</span>
+            {% else %}
+            <span class="badge badge-pending">Hidden</span>
+            {% endif %}
+        </div>
+        <div>
+            <strong>Eligible:</strong><br>
+            <span class="text-muted">{{ eligible_apps|length }} candidates</span>
+        </div>
+    </div>
+</div>
+
+{% if state.is_locked %}
+<div class="alert alert-warning mb-lg" style="position: static;">
+    Round is locked. Unlock to make changes.
+</div>
+{% endif %}
+
+<!-- Candidates Table -->
+<h3 class="mb-md">Candidates</h3>
+
+{% if eligible_apps %}
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>Select</th>
+                <th>Name</th>
+                <th>Reg No</th>
+                <th>Branch</th>
+                <th>Status</th>
+                <th>Notes</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for app in eligible_apps %}
+            {% set rc = candidates.get(app.id) %}
+            <tr>
+                <td>
+                    <form method="POST"
+                        action="{{ url_for('dept.toggle_candidate', round_id=round.id, app_id=app.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit"
+                            class="btn btn-{{ 'success' if rc and rc.status == 'selected' else 'secondary' }} btn-sm" {%
+                            if state.is_locked %}disabled{% endif %}>
+                            {{ 'Selected' if rc and rc.status == 'selected' else 'Select' }}
+                        </button>
+                    </form>
+                </td>
+                <td>
+                    <strong>{{ app.student.name or 'No name' }}</strong>
+                    <br><span class="text-muted" style="font-size: 0.8rem;">{{ app.student.email }}</span>
+                </td>
+                <td>{{ app.student.reg_no or '-' }}</td>
+                <td>{{ app.student.branch or '-' }}</td>
+                <td>
+                    {% if rc %}
+                    {% if rc.status == 'selected' %}
+                    <span class="badge badge-open">Selected</span>
+                    {% elif rc.status == 'not_selected' %}
+                    <span class="badge badge-ended">Not Selected</span>
+                    {% else %}
+                    <span class="badge badge-pending">Pending</span>
+                    {% endif %}
+                    {% else %}
+                    <span class="badge badge-pending">Not Reviewed</span>
+                    {% endif %}
+                </td>
+                <td style="max-width: 200px;">
+                    {% if rc and rc.notes %}
+                    <span title="{{ rc.notes }}">{{ rc.notes[:30] }}{% if rc.notes|length > 30 %}...{% endif %}</span>
+                    {% else %}
+                    <span class="text-muted">-</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="flex gap-sm">
+                        <a href="{{ url_for('student.profile', student_id=app.student.id) if app.student else '#' }}"
+                            target="_blank" class="btn btn-secondary btn-sm">View</a>
+                        <button type="button" class="btn btn-secondary btn-sm"
+                            onclick="openNotesModal({{ app.id }}, {{ (rc.notes or '')|tojson }})" {% if state.is_locked
+                            %}disabled{% endif %}>
+                            Notes
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="card text-center">
+    <p class="text-muted">No eligible candidates for this round.</p>
+    {% if round.prerequisite %}
+    <p class="text-muted mt-sm" style="font-size: 0.85rem;">
+        Candidates must be selected in "{{ round.prerequisite.name }}" first.
+    </p>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Notes Modal -->
+<div id="notesModal"
+    style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center;">
+    <div class="glass-card" style="max-width: 500px; width: 90%;">
+        <h3 class="mb-md">Edit Notes</h3>
+        <form id="notesForm" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <textarea name="notes" id="notesInput" class="form-control" rows="4"
+                    placeholder="Add notes about this candidate..."></textarea>
+            </div>
+            <div class="flex gap-md">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">Save</button>
+                <button type="button" class="btn btn-secondary" onclick="closeNotesModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openNotesModal(appId, notes) {
+        document.getElementById('notesInput').value = notes;
+        document.getElementById('notesForm').action = '{{ url_for("dept.update_notes", round_id=round.id, app_id=0) }}'.replace('/0', '/' + appId);
+        document.getElementById('notesModal').style.display = 'flex';
+    }
+
+    function closeNotesModal() {
+        document.getElementById('notesModal').style.display = 'none';
+    }
+
+    document.getElementById('notesModal').addEventListener('click', function (e) {
+        if (e.target === this) closeNotesModal();
+    });
+</script>
+{% endblock %}

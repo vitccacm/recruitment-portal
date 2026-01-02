@@ -1,0 +1,114 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ round.name }}{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('admin.rounds') }}" class="btn btn-secondary btn-sm mb-lg">Back to Rounds</a>
+
+<div class="flex justify-between items-center mb-xl">
+    <div>
+        <h1 class="page-title"><span class="gradient-text">{{ round.name }}</span></h1>
+        <p class="page-subtitle">{{ round.description or 'No description' }}</p>
+    </div>
+    <a href="{{ url_for('admin.edit_round', round_id=round.id) }}" class="btn btn-secondary">Edit Round</a>
+</div>
+
+<!-- Round Info -->
+<div class="card mb-xl">
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+        <div>
+            <strong>Prerequisite:</strong><br>
+            <span class="text-muted">{{ round.prerequisite.name if round.prerequisite else 'None' }}</span>
+        </div>
+        <div>
+            <strong>Visible Before Results:</strong><br>
+            {% if round.is_visible_before_results %}
+            <span class="badge badge-open">Yes</span>
+            {% else %}
+            <span class="badge badge-pending">No</span>
+            {% endif %}
+        </div>
+        <div>
+            <strong>Display Order:</strong><br>
+            <span class="text-muted">{{ round.order }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Department States - Cards -->
+<h3 class="mb-md">Department Status</h3>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+    {% for ds in dept_stats %}
+    <div class="glass-card">
+        <div class="flex justify-between items-center mb-md">
+            <h4 style="margin: 0;">{{ ds.department.name }}</h4>
+        </div>
+
+        <!-- Stats -->
+        <div
+            style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1rem; text-align: center;">
+            <div style="background: var(--glass-bg); padding: 0.5rem; border-radius: 0.5rem;">
+                <span class="text-muted" style="font-size: 0.65rem;">TOTAL</span><br>
+                <strong>{{ ds.total }}</strong>
+            </div>
+            <div style="background: var(--glass-bg); padding: 0.5rem; border-radius: 0.5rem;">
+                <span class="text-muted" style="font-size: 0.65rem;">SELECTED</span><br>
+                <strong class="gradient-text">{{ ds.selected }}</strong>
+            </div>
+            <div style="background: var(--glass-bg); padding: 0.5rem; border-radius: 0.5rem;">
+                <span class="text-muted" style="font-size: 0.65rem;">PENDING</span><br>
+                <strong>{{ ds.pending }}</strong>
+            </div>
+        </div>
+
+        <!-- Status badges -->
+        <div class="flex gap-sm mb-md" style="flex-wrap: wrap;">
+            {% if ds.state.is_locked %}
+            <span class="badge badge-ended">Locked</span>
+            {% else %}
+            <span class="badge badge-open">Open</span>
+            {% endif %}
+
+            {% if ds.state.results_released %}
+            <span class="badge badge-open">Released</span>
+            {% else %}
+            <span class="badge badge-pending">Hidden</span>
+            {% endif %}
+
+            {% if ds.state.notes_public %}
+            <span class="badge badge-open">Notes Public</span>
+            {% endif %}
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-sm" style="flex-wrap: wrap;">
+            <form method="POST"
+                action="{{ url_for('admin.toggle_round_lock', round_id=round.id, dept_id=ds.department.id) }}"
+                style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-{{ 'danger' if ds.state.is_locked else 'secondary' }} btn-sm">
+                    {{ 'Unlock' if ds.state.is_locked else 'Lock' }}
+                </button>
+            </form>
+            <form method="POST"
+                action="{{ url_for('admin.toggle_round_release', round_id=round.id, dept_id=ds.department.id) }}"
+                style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit"
+                    class="btn btn-{{ 'success' if not ds.state.results_released else 'secondary' }} btn-sm">
+                    {{ 'Hide' if ds.state.results_released else 'Release' }}
+                </button>
+            </form>
+            <form method="POST"
+                action="{{ url_for('admin.toggle_notes_public', round_id=round.id, dept_id=ds.department.id) }}"
+                style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-secondary btn-sm">
+                    {{ 'Hide Notes' if ds.state.notes_public else 'Show Notes' }}
+                </button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

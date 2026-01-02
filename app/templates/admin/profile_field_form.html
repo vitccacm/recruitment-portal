@@ -1,0 +1,67 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ 'Edit' if field else 'Add' }} Profile Field{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('admin.profile_fields') }}" class="btn btn-secondary btn-sm mb-lg">Back to Fields</a>
+
+<div class="page-header">
+    <h1 class="page-title">{{ 'Edit' if field else 'Add' }} <span class="gradient-text">Profile Field</span></h1>
+</div>
+
+<div class="glass-card" style="max-width: 600px;">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group">
+            <label class="form-label">Field Name (internal)</label>
+            <input type="text" name="field_name" class="form-control" value="{{ field.field_name if field else '' }}"
+                placeholder="e.g., github_username" required>
+            <p class="text-muted mt-sm" style="font-size: 0.75rem;">Lowercase, no spaces. Used internally.</p>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Display Label</label>
+            <input type="text" name="label" class="form-control" value="{{ field.label if field else '' }}"
+                placeholder="e.g., GitHub Username" required>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Field Type</label>
+            <select name="field_type" class="form-control">
+                <option value="text" {% if field and field.field_type=='text' %}selected{% endif %}>Text</option>
+                <option value="textarea" {% if field and field.field_type=='textarea' %}selected{% endif %}>Textarea
+                </option>
+                <option value="number" {% if field and field.field_type=='number' %}selected{% endif %}>Number</option>
+                <option value="select" {% if field and field.field_type=='select' %}selected{% endif %}>Dropdown Select
+                </option>
+                <option value="url" {% if field and field.field_type=='url' %}selected{% endif %}>URL/Link</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Options (for dropdown)</label>
+            <input type="text" name="options" class="form-control" value="{{ field.options if field else '' }}"
+                placeholder="Option1, Option2, Option3">
+            <p class="text-muted mt-sm" style="font-size: 0.75rem;">Comma-separated list for dropdown options</p>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Order</label>
+            <input type="number" name="order" class="form-control" value="{{ field.order if field else 0 }}" min="0">
+        </div>
+
+        <div class="form-group flex gap-lg">
+            <label class="flex gap-sm items-center">
+                <input type="checkbox" name="is_required" {% if field and field.is_required %}checked{% endif %}>
+                <span>Required</span>
+            </label>
+            <label class="flex gap-sm items-center">
+                <input type="checkbox" name="is_enabled" {% if not field or field.is_enabled %}checked{% endif %}>
+                <span>Enabled</span>
+            </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg">{{ 'Update' if field else 'Create' }} Field</button>
+    </form>
+</div>
+{% endblock %}

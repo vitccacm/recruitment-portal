@@ -1,0 +1,131 @@
+{% extends "admin/base.html" %}
+{% block title %}{{ department.name }}{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('admin.departments') }}" class="btn btn-secondary btn-sm mb-lg">← Back to Departments</a>
+
+<!-- Department Header -->
+<div class="glass-card mb-xl">
+    <div class="flex justify-between items-center" style="flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1>{{ department.name }}</h1>
+            <p class="text-muted">{{ department.short_description or 'No description' }}</p>
+        </div>
+        <div class="flex gap-sm">
+            <a href="{{ url_for('admin.edit_department', dept_id=department.id) }}" class="btn btn-primary">Edit
+                Department</a>
+            <form method="POST" action="{{ url_for('admin.delete_department', dept_id=department.id) }}"
+                onsubmit="return confirm('Are you sure you want to delete this department? This will also delete all applications.');">
+                <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid mb-xl" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="stat-card">
+        <div class="stat-value">{{ applications|length }}</div>
+        <div class="stat-label">Total Applications</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ applications|selectattr('status', 'eq', 'pending')|list|length }}</div>
+        <div class="stat-label">Pending</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ applications|selectattr('status', 'eq', 'accepted')|list|length }}</div>
+        <div class="stat-label">Accepted</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ applications|selectattr('status', 'eq', 'rejected')|list|length }}</div>
+        <div class="stat-label">Rejected</div>
+    </div>
+</div>
+
+<!-- Department Details -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+    <div class="card">
+        <h3 class="mb-md">Details</h3>
+        <p><strong>Status:</strong>
+            {% if department.is_active %}
+            <span class="badge badge-open">Active</span>
+            {% else %}
+            <span class="badge badge-ended">Inactive</span>
+            {% endif %}
+        </p>
+        {% if department.positions %}
+        <p class="mt-md"><strong>Positions:</strong> {{ department.positions }}</p>
+        {% endif %}
+        {% if department.recruitment_start %}
+        <p class="mt-md"><strong>Starts:</strong> {{ department.recruitment_start.strftime('%b %d, %Y at %I:%M %p') }}
+        </p>
+        {% endif %}
+        {% if department.recruitment_end %}
+        <p class="mt-md"><strong>Ends:</strong> {{ department.recruitment_end.strftime('%b %d, %Y at %I:%M %p') }}</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h3 class="mb-md">Image</h3>
+        {% if department.image_path %}
+        <img src="{{ url_for('static', filename=department.image_path) }}" alt="{{ department.name }}"
+            style="width: 100%; border-radius: var(--radius-md);">
+        {% else %}
+        <p class="text-muted">No image uploaded</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Applications -->
+<div class="card mt-xl">
+    <h3 class="mb-lg">Applications</h3>
+
+    {% if applications %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Email</th>
+                    <th>Reg No</th>
+                    <th>Position</th>
+                    <th>Applied</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for app in applications %}
+                <tr>
+                    <td><strong>{{ app.student.name or 'No name' }}</strong></td>
+                    <td>{{ app.student.email }}</td>
+                    <td>{{ app.student.reg_no or '-' }}</td>
+                    <td>{{ app.position or '-' }}</td>
+                    <td>{{ app.applied_at.strftime('%b %d, %Y') }}</td>
+                    <td><span class="badge badge-{{ app.status }}">{{ app.status|capitalize }}</span></td>
+                    <td>
+                        <div class="flex gap-sm">
+                            {% if app.status != 'accepted' %}
+                            <form method="POST"
+                                action="{{ url_for('admin.update_application_status', app_id=app.id, status='accepted') }}">
+                                <button type="submit" class="btn btn-success btn-sm">Accept</button>
+                            </form>
+                            {% endif %}
+                            {% if app.status != 'rejected' %}
+                            <form method="POST"
+                                action="{{ url_for('admin.update_application_status', app_id=app.id, status='rejected') }}">
+                                <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted">No applications yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

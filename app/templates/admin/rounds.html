@@ -1,0 +1,57 @@
+{% extends "admin/base.html" %}
+{% block title %}Rounds{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-xl">
+    <div>
+        <h1 class="page-title">Manage <span class="gradient-text">Rounds</span></h1>
+        <p class="page-subtitle">Create and manage recruitment rounds</p>
+    </div>
+    <a href="{{ url_for('admin.add_round') }}" class="btn btn-primary">+ Add Round</a>
+</div>
+
+{% if rounds %}
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
+    {% for round in rounds %}
+    <div class="glass-card">
+        <div class="flex justify-between items-center mb-md">
+            <h3 style="margin: 0;">{{ round.name }}</h3>
+            <span class="badge badge-pending">Order: {{ round.order }}</span>
+        </div>
+
+        {% if round.description %}
+        <p class="text-muted mb-md" style="font-size: 0.85rem;">{{ round.description[:100] }}{% if
+            round.description|length > 100 %}...{% endif %}</p>
+        {% endif %}
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+            <div>
+                <span class="text-muted" style="font-size: 0.7rem;">PREREQUISITE</span><br>
+                <strong>{{ round.prerequisite.name if round.prerequisite else 'None' }}</strong>
+            </div>
+            <div>
+                <span class="text-muted" style="font-size: 0.7rem;">VISIBLE BEFORE</span><br>
+                {% if round.is_visible_before_results %}
+                <span class="badge badge-open">Yes</span>
+                {% else %}
+                <span class="badge badge-pending">No</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="flex gap-sm">
+            <a href="{{ url_for('admin.round_detail', round_id=round.id) }}" class="btn btn-primary btn-sm"
+                style="flex: 1;">Manage</a>
+            <a href="{{ url_for('admin.edit_round', round_id=round.id) }}" class="btn btn-secondary btn-sm">Edit</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="glass-card text-center" style="max-width: 400px; margin: 0 auto;">
+    <h3>No Rounds Yet</h3>
+    <p class="text-muted mt-md">Create your first recruitment round</p>
+    <a href="{{ url_for('admin.add_round') }}" class="btn btn-primary mt-lg">+ Add Round</a>
+</div>
+{% endif %}
+{% endblock %}

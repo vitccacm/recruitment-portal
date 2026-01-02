@@ -1,0 +1,95 @@
+{% extends "dept/base.html" %}
+{% block title %}Dashboard - {{ department.name }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title"><span class="gradient-text">{{ department.name }}</span> Dashboard</h1>
+    <p class="page-subtitle">Welcome, {{ current_user.name or 'Dept Admin' }}</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid mb-xl" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.total_applications }}</div>
+        <div class="stat-label">Total Applications</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.pending_applications }}</div>
+        <div class="stat-label">Pending</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.accepted_applications }}</div>
+        <div class="stat-label">Accepted</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.rejected_applications }}</div>
+        <div class="stat-label">Rejected</div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="glass-card mb-xl">
+    <h3 class="mb-lg">Quick Actions</h3>
+    <div class="flex gap-md" style="flex-wrap: wrap;">
+        <a href="{{ url_for('dept.applications') }}" class="btn btn-primary">Review Applications</a>
+        <a href="{{ url_for('dept.edit_department') }}" class="btn btn-secondary">Edit Department</a>
+    </div>
+</div>
+
+<!-- Department Status -->
+<div class="card mb-xl">
+    <h3 class="mb-md">Department Status</h3>
+    <p><strong>Status:</strong>
+        {% if department.is_active %}
+        <span class="badge badge-open">Active</span>
+        {% else %}
+        <span class="badge badge-ended">Inactive</span>
+        {% endif %}
+    </p>
+    {% if department.recruitment_start %}
+    <p class="mt-sm"><strong>Starts:</strong> {{ department.recruitment_start.strftime('%b %d, %Y at %I:%M %p') }}</p>
+    {% endif %}
+    {% if department.recruitment_end %}
+    <p class="mt-sm"><strong>Ends:</strong> {{ department.recruitment_end.strftime('%b %d, %Y at %I:%M %p') }}</p>
+    {% endif %}
+</div>
+
+<!-- Recent Applications -->
+<div class="card">
+    <div class="flex justify-between items-center mb-lg">
+        <h3>Recent Applications</h3>
+        <a href="{{ url_for('dept.applications') }}" class="btn btn-outline btn-sm">View All</a>
+    </div>
+
+    {% if recent_applications %}
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>Position</th>
+                    <th>Applied</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for app in recent_applications %}
+                <tr>
+                    <td>
+                        <strong>{{ app.student.name or app.student.email }}</strong>
+                        <br><span class="text-muted" style="font-size: 0.85rem;">{{ app.student.reg_no or 'No Reg No'
+                            }}</span>
+                    </td>
+                    <td>{{ app.position or '-' }}</td>
+                    <td>{{ app.applied_at.strftime('%b %d, %Y') }}</td>
+                    <td><span class="badge badge-{{ app.status }}">{{ app.status|capitalize }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted">No applications yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

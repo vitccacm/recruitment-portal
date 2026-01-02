@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<section class="page">
+    <div class="container" style="max-width: 600px;">
+        <div class="page-header">
+            <h1 class="page-title">My <span class="gradient-text">Profile</span></h1>
+            <p class="page-subtitle">Complete your profile to apply for departments</p>
+        </div>
+
+        <!-- Profile Completion -->
+        <div class="profile-completion {% if not current_user.can_apply %}incomplete{% endif %} mb-xl">
+            <div class="progress-label">
+                <span>Profile Completion</span>
+                <span>{{ current_user.profile_completion }}%</span>
+            </div>
+            <div class="progress">
+                <div class="progress-bar" style="width: {{ current_user.profile_completion }}%;"></div>
+            </div>
+            {% if not current_user.can_apply %}
+            <p class="mt-md text-warning">Complete at least 75% to apply</p>
+            {% else %}
+            <p class="mt-md text-success">You can apply for departments!</p>
+            {% endif %}
+        </div>
+
+        <div class="glass-card">
+            <!-- Profile Picture -->
+            <div class="text-center mb-xl">
+                {% if current_user.profile_picture %}
+                <img src="{{ current_user.profile_picture }}" alt="Profile"
+                    style="width: 100px; height: 100px; border-radius: 50%; border: 3px solid var(--acm-blue);">
+                {% else %}
+                <div
+                    style="width: 100px; height: 100px; border-radius: 50%; background: var(--bg-secondary); display: inline-flex; align-items: center; justify-content: center; font-size: 2.5rem;">
+                    👤
+                </div>
+                {% endif %}
+                <p class="text-muted mt-md">{{ current_user.email }}</p>
+            </div>
+
+            <form method="POST" action="{{ url_for('student.profile') }}">
+                {{ form.hidden_tag() }}
+
+                <div class="form-group">
+                    <label class="form-label" for="name">Full Name *</label>
+                    {{ form.name(class="form-control", placeholder="Enter your full name") }}
+                    {% for error in form.name.errors %}
+                    <p class="form-error">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="reg_no">Registration Number *</label>
+                    {{ form.reg_no(class="form-control", placeholder="e.g., 21BCE1234") }}
+                    {% for error in form.reg_no.errors %}
+                    <p class="form-error">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="batch">Batch (Year of Joining) *</label>
+                    {{ form.batch(class="form-control") }}
+                    {% for error in form.batch.errors %}
+                    <p class="form-error">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="phone">Phone Number *</label>
+                    {{ form.phone(class="form-control", placeholder="e.g., +91 9876543210") }}
+                    {% for error in form.phone.errors %}
+                    <p class="form-error">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="branch">Branch *</label>
+                    {{ form.branch(class="form-control") }}
+                    {% for error in form.branch.errors %}
+                    <p class="form-error">{{ error }}</p>
+                    {% endfor %}
+                </div>
+
+                <div class="flex gap-md mt-xl">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">Save Profile</button>
+                    <a href="{{ url_for('student.dashboard') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

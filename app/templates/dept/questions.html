@@ -1,0 +1,52 @@
+{% extends "dept/base.html" %}
+{% block title %}Application Questions{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-xl">
+    <div>
+        <h1 class="page-title">Application <span class="gradient-text">Questions</span></h1>
+        <p class="page-subtitle">Customize questions applicants must answer</p>
+    </div>
+    <a href="{{ url_for('dept.add_question') }}" class="btn btn-primary">+ Add Question</a>
+</div>
+
+{% if questions %}
+<div style="display: grid; gap: 1rem;">
+    {% for q in questions %}
+    <div class="glass-card" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="flex: 1;">
+            <div class="flex gap-sm items-center">
+                <strong>{{ q.question_text[:60] }}{% if q.question_text|length > 60 %}...{% endif %}</strong>
+                <span class="badge badge-pending" style="font-size: 0.7rem;">{{ q.question_type }}</span>
+                {% if q.is_required %}
+                <span class="badge badge-ended" style="font-size: 0.7rem;">Required</span>
+                {% else %}
+                <span class="badge badge-open" style="font-size: 0.7rem;">Optional</span>
+                {% endif %}
+            </div>
+            <p class="text-muted mt-sm" style="font-size: 0.8rem;">
+                Order: {{ q.order }}
+                {% if q.options %}| Options: {{ q.options[:40] }}{% if q.options|length > 40 %}...{% endif %}{% endif %}
+                {% if q.question_type == 'file_upload' %}| Max: {{ q.file_max_size }}KB ({{ q.allowed_extensions }}){%
+                endif %}
+            </p>
+        </div>
+        <div class="flex gap-sm">
+            <a href="{{ url_for('dept.edit_question', q_id=q.id) }}" class="btn btn-secondary btn-sm">Edit</a>
+            <form method="POST" action="{{ url_for('dept.delete_question', q_id=q.id) }}"
+                onsubmit="return confirm('Delete this question?');" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="glass-card text-center" style="max-width: 400px; margin: 0 auto;">
+    <h3>No Custom Questions</h3>
+    <p class="text-muted mt-md">Add questions that applicants must answer when applying</p>
+    <a href="{{ url_for('dept.add_question') }}" class="btn btn-primary mt-lg">+ Add Question</a>
+</div>
+{% endif %}
+{% endblock %}

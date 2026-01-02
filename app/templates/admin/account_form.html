@@ -1,0 +1,104 @@
+{% extends "admin/base.html" %}
+{% block title %}{% if admin %}Edit Account{% else %}Add Account{% endif %}{% endblock %}
+
+{% block content %}
+<a href="{{ url_for('admin.accounts') }}" class="btn btn-secondary btn-sm mb-lg">Back to Accounts</a>
+
+<div class="glass-card" style="max-width: 600px;">
+    <div class="mb-xl">
+        <h1>{% if admin %}Edit{% else %}Add{% endif %} <span class="gradient-text">Account</span></h1>
+        <p class="text-muted">{% if admin %}Update account details{% else %}Create a new admin or dept-admin account{%
+            endif %}</p>
+    </div>
+
+    <form method="POST"
+        action="{% if admin %}{{ url_for('admin.edit_account', admin_id=admin.id) }}{% else %}{{ url_for('admin.add_account') }}{% endif %}">
+        {{ form.hidden_tag() }}
+
+        <div class="form-group">
+            <label class="form-label">Name *</label>
+            {{ form.name(class="form-control", placeholder="Full name") }}
+            {% for error in form.name.errors %}
+            <p class="form-error">{{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Email/Username *</label>
+            {{ form.email(class="form-control", placeholder="Email or username") }}
+            {% for error in form.email.errors %}
+            <p class="form-error">{{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Role *</label>
+            <select name="role" class="form-control" id="role-select" onchange="toggleDepartment()">
+                <option value="admin" {% if admin and admin.role=='admin' %}selected{% endif %}>Super Admin</option>
+                <option value="dept-admin" {% if admin and admin.role=='dept-admin' %}selected{% endif %}>Department
+                    Admin</option>
+            </select>
+        </div>
+
+        <div class="form-group" id="department-group"
+            style="{% if not (admin and admin.role == 'dept-admin') %}display: none;{% endif %}">
+            <label class="form-label">Assign to Department *</label>
+            <select name="department_id" class="form-control">
+                <option value="">Select Department</option>
+                {% for dept in departments %}
+                <option value="{{ dept.id }}" {% if admin and admin.department_id==dept.id %}selected{% endif %}>{{
+                    dept.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <hr style="border-color: var(--border-color); margin: 2rem 0;">
+
+        <h4 class="mb-md">Password</h4>
+
+        <div class="form-group">
+            <label class="switch">
+                {{ form.generate_password(id="generate-password") }}
+                <span class="switch-slider"></span>
+            </label>
+            <span style="margin-left: 1rem;">Generate Random Password</span>
+        </div>
+
+        <div class="form-group" id="password-group">
+            <label class="form-label">Password {% if not admin %}*{% endif %}</label>
+            {{ form.password(class="form-control", placeholder="Enter password (min 6 characters)") }}
+            {% for error in form.password.errors %}
+            <p class="form-error">{{ error }}</p>
+            {% endfor %}
+            {% if admin %}
+            <p class="text-muted mt-sm" style="font-size: 0.85rem;">Leave blank to keep current password</p>
+            {% endif %}
+        </div>
+
+        <div class="flex gap-md mt-xl">
+            <button type="submit" class="btn btn-primary btn-lg" style="flex: 1;">
+                {% if admin %}Update Account{% else %}Create Account{% endif %}
+            </button>
+            <a href="{{ url_for('admin.accounts') }}" class="btn btn-secondary btn-lg">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    function toggleDepartment() {
+        const role = document.getElementById('role-select').value;
+        const deptGroup = document.getElementById('department-group');
+        deptGroup.style.display = role === 'dept-admin' ? 'block' : 'none';
+    }
+
+    document.getElementById('generate-password').addEventListener('change', function () {
+        const passwordGroup = document.getElementById('password-group');
+        passwordGroup.style.display = this.checked ? 'none' : 'block';
+    });
+
+    // Initial state
+    if (document.getElementById('generate-password').checked) {
+        document.getElementById('password-group').style.display = 'none';
+    }
+</script>
+{% endblock %}

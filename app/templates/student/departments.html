@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Departments{% endblock %}
+
+{% block content %}
+<section class="page">
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Browse <span class="gradient-text">Departments</span></h1>
+            <p class="page-subtitle">Find your perfect team and apply</p>
+        </div>
+
+        {% if not current_user.can_apply %}
+        <div class="alert alert-warning mb-xl" style="position: static; max-width: none;">
+            ⚠️ Complete at least 75% of your profile to apply.
+            <a href="{{ url_for('student.profile') }}" style="color: inherit; text-decoration: underline;">Complete
+                Profile →</a>
+        </div>
+        {% endif %}
+
+        {% if departments %}
+        <div class="dept-grid">
+            {% for dept in departments %}
+            <div class="dept-card">
+                {% if dept.image_path %}
+                <img src="{{ url_for('static', filename=dept.image_path) }}" alt="{{ dept.name }}"
+                    class="dept-card-img">
+                {% else %}
+                <div class="dept-card-img"
+                    style="background: linear-gradient(135deg, var(--acm-blue) 0%, var(--acm-blue-dark) 100%); display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 3rem; opacity: 0.3;"></span>
+                </div>
+                {% endif %}
+                <div class="dept-card-body">
+                    <h3 class="dept-card-title">{{ dept.name }}</h3>
+                    <p class="dept-card-desc">{{ dept.short_description or 'Join our team and make an impact!' }}</p>
+                    <div class="dept-card-footer">
+                        {% if dept.id in applied_dept_ids %}
+                        <span class="badge badge-pending">✓ Applied</span>
+                        {% elif dept.recruitment_status == 'open' %}
+                        <span class="badge badge-open">● Open</span>
+                        {% elif dept.recruitment_status == 'upcoming' %}
+                        <span class="badge badge-upcoming">◷ Coming Soon</span>
+                        {% else %}
+                        <span class="badge badge-ended">● Closed</span>
+                        {% endif %}
+
+                        <div class="flex gap-sm">
+                            <a href="{{ url_for('student.department_detail', dept_id=dept.id) }}"
+                                class="btn btn-secondary btn-sm">View</a>
+                            {% if dept.id not in applied_dept_ids and dept.is_accepting_applications and
+                            current_user.can_apply %}
+                            <a href="{{ url_for('student.apply', dept_id=dept.id) }}"
+                                class="btn btn-primary btn-sm">Apply</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="glass-card text-center" style="max-width: 500px; margin: 0 auto;">
+            <h3>No Open Departments</h3>
+            <p class="text-muted mt-md">Check back later for open positions!</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

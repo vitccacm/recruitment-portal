@@ -1,0 +1,95 @@
+{% extends "dept/base.html" %}
+{% block title %}{{ department.name }}{% endblock %}
+
+{% block content %}
+<!-- Header with Edit Button -->
+<div class="flex justify-between items-center mb-xl">
+    <div>
+        <h1 class="page-title"><span class="gradient-text">{{ department.name }}</span></h1>
+        <p class="page-subtitle">{{ department.short_description or 'No description' }}</p>
+    </div>
+    <a href="{{ url_for('dept.edit_department') }}" class="btn btn-primary">Edit Department</a>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid mb-xl" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="stat-card">
+        <div class="stat-value">{{ department.applications.count() }}</div>
+        <div class="stat-label">Total Applications</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ department.applications.filter_by(status='pending').count() }}</div>
+        <div class="stat-label">Pending</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ department.applications.filter_by(status='accepted').count() }}</div>
+        <div class="stat-label">Accepted</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ department.applications.filter_by(status='rejected').count() }}</div>
+        <div class="stat-label">Rejected</div>
+    </div>
+</div>
+
+<!-- Department Details -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1rem;">
+    <div class="card">
+        <h3 class="mb-md">Department Details</h3>
+
+        <p class="mb-sm"><strong>Status:</strong>
+            {% if department.is_active %}
+            <span class="badge badge-open">Active</span>
+            {% else %}
+            <span class="badge badge-ended">Inactive</span>
+            {% endif %}
+        </p>
+
+        {% if department.recruitment_start %}
+        <p class="mb-sm"><strong>Starts:</strong> {{ department.recruitment_start.strftime('%b %d, %Y at %I:%M %p') }}
+        </p>
+        {% endif %}
+
+        {% if department.recruitment_end %}
+        <p class="mb-sm"><strong>Ends:</strong> {{ department.recruitment_end.strftime('%b %d, %Y at %I:%M %p') }}</p>
+        {% endif %}
+
+        {% if department.positions %}
+        <div class="mt-lg">
+            <strong>Positions:</strong>
+            <div class="flex gap-sm mt-sm" style="flex-wrap: wrap;">
+                {% for pos in department.positions.split(',') %}
+                <span class="badge badge-pending">{{ pos.strip() }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if department.description %}
+        <div class="mt-lg">
+            <strong>Description:</strong>
+            <p class="text-muted mt-sm" style="white-space: pre-wrap;">{{ department.description }}</p>
+        </div>
+        {% endif %}
+
+        {% if department.requirements %}
+        <div class="mt-lg">
+            <strong>Requirements:</strong>
+            <p class="text-muted mt-sm" style="white-space: pre-wrap;">{{ department.requirements }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h3 class="mb-md">Image</h3>
+        {% if department.image_path %}
+        <img src="{{ url_for('static', filename=department.image_path) }}" alt="{{ department.name }}"
+            style="width: 100%; border-radius: var(--radius-md);">
+        {% else %}
+        <div
+            style="background: var(--bg-secondary); border-radius: var(--radius-md); padding: 2rem; text-align: center;">
+            <p class="text-muted">No image uploaded</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}My Rounds{% endblock %}
+
+{% block content %}
+<div class="page container">
+    <div class="page-header">
+        <h1 class="page-title">My <span class="gradient-text">Rounds</span></h1>
+        <p class="page-subtitle">Track your progress through recruitment rounds</p>
+    </div>
+
+    {% if rounds_by_dept %}
+    <div style="display: grid; gap: 2rem;">
+        {% for dept_name, data in rounds_by_dept.items() %}
+        <div class="glass-card">
+            <div class="flex justify-between items-center mb-md">
+                <h3 style="margin: 0;">{{ dept_name }}</h3>
+                <span class="badge badge-pending">{{ data.application.position or 'General' }}</span>
+            </div>
+
+            <!-- Rounds as cards grid -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem;">
+                {% for rd in data.rounds %}
+                <div
+                    style="background: var(--glass-bg); padding: 1rem; border-radius: 0.75rem; border: 1px solid var(--border-color);">
+                    <div class="flex justify-between items-center mb-sm">
+                        <strong>{{ rd.round.name }}</strong>
+                        {% if rd.is_eligible %}
+                        <span class="badge badge-open" style="font-size: 0.65rem;">Eligible</span>
+                        {% else %}
+                        <span class="badge badge-ended" style="font-size: 0.65rem;">Not Eligible</span>
+                        {% endif %}
+                    </div>
+
+                    {% if rd.round.description %}
+                    <p class="text-muted mb-md" style="font-size: 0.8rem;">{{ rd.round.description[:60] }}{% if
+                        rd.round.description|length > 60 %}...{% endif %}</p>
+                    {% endif %}
+
+                    <!-- Status -->
+                    <div
+                        style="text-align: center; padding: 0.75rem; background: var(--bg-secondary); border-radius: 0.5rem; margin-bottom: 0.5rem;">
+                        {% if rd.state.results_released %}
+                        {% if rd.candidate %}
+                        {% if rd.candidate.status == 'selected' %}
+                        <span style="color: var(--success-color); font-weight: bold;">Selected</span>
+                        {% elif rd.candidate.status == 'not_selected' %}
+                        <span style="color: var(--danger-color); font-weight: bold;">Not Selected</span>
+                        {% else %}
+                        <span class="text-muted">Under Review</span>
+                        {% endif %}
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                        {% else %}
+                        <span class="text-muted">Under Review</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Notes -->
+                    {% if rd.state.results_released and rd.state.notes_public and rd.candidate and rd.candidate.notes %}
+                    <div
+                        style="font-size: 0.8rem; color: var(--text-muted); padding-top: 0.5rem; border-top: 1px solid var(--border-color);">
+                        <strong>Notes:</strong> {{ rd.candidate.notes[:100] }}{% if rd.candidate.notes|length > 100
+                        %}...{% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="glass-card text-center" style="max-width: 400px; margin: 0 auto;">
+        <h3>No Rounds Yet</h3>
+        <p class="text-muted mt-md">
+            {% if current_user.applications.count() > 0 %}
+            Rounds will appear here when results are released or rounds are made public.
+            {% else %}
+            Apply to a department first to see your round progress.
+            {% endif %}
+        </p>
+        <a href="{{ url_for('student.departments') }}" class="btn btn-primary mt-lg">Browse Departments</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

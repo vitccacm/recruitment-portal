@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<section class="page">
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Welcome back, <span class="gradient-text">{{ current_user.name or 'Student'
+                    }}</span>!</h1>
+            <p class="page-subtitle">Manage your profile and applications</p>
+        </div>
+
+        <!-- Profile Completion -->
+        <div class="profile-completion {% if not current_user.can_apply %}incomplete{% endif %} mb-xl">
+            <div class="progress-label">
+                <span>Profile Completion</span>
+                <span>{{ current_user.profile_completion }}%</span>
+            </div>
+            <div class="progress">
+                <div class="progress-bar" style="width: {{ current_user.profile_completion }}%;"></div>
+            </div>
+            {% if not current_user.can_apply %}
+            <p class="mt-md" style="color: var(--warning);">
+                Complete at least 75% of your profile to apply for departments.
+                <a href="{{ url_for('student.profile') }}" style="color: var(--acm-blue-light);">Complete Profile</a>
+            </p>
+            {% endif %}
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="stats-grid mb-xl">
+            <div class="stat-card">
+                <div class="stat-value">{{ current_user.applications.count() }}</div>
+                <div class="stat-label">My Applications</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ open_departments }}</div>
+                <div class="stat-label">Open Departments</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ current_user.applications.filter_by(status='accepted').count() }}</div>
+                <div class="stat-label">Accepted</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">{{ current_user.applications.filter_by(status='pending').count() }}</div>
+                <div class="stat-label">Pending</div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="glass-card mb-xl">
+            <h3 class="mb-lg">Quick Actions</h3>
+            <div class="flex gap-md" style="flex-wrap: wrap;">
+                <a href="{{ url_for('student.profile') }}" class="btn btn-secondary">
+                    Edit Profile
+                </a>
+                <a href="{{ url_for('student.departments') }}" class="btn btn-primary">
+                    Browse Departments
+                </a>
+                <a href="{{ url_for('student.applications') }}" class="btn btn-secondary">
+                    My Applications
+                </a>
+                <a href="{{ url_for('student.rounds') }}" class="btn btn-secondary">
+                    View Rounds
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Applications -->
+        {% if recent_applications %}
+        <div class="card">
+            <h3 class="mb-lg">Recent Applications</h3>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Department</th>
+                            <th>Position</th>
+                            <th>Applied</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for app in recent_applications %}
+                        <tr>
+                            <td>{{ app.department.name }}</td>
+                            <td>{{ app.position or '-' }}</td>
+                            <td>{{ app.applied_at.strftime('%b %d, %Y') }}</td>
+                            <td>
+                                <span class="badge badge-{{ app.status }}">{{ app.status|capitalize }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-md">
+                <a href="{{ url_for('student.applications') }}" class="btn btn-outline btn-sm">View All →</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

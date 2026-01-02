@@ -1,0 +1,109 @@
+{% extends "admin/base.html" %}
+{% block title %}Applications{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">All <span class="gradient-text">Applications</span></h1>
+    <p class="page-subtitle">Review and manage student applications</p>
+</div>
+
+<!-- Filters -->
+<div class="card mb-xl">
+    <form method="GET" action="{{ url_for('admin.applications') }}" class="flex gap-md"
+        style="flex-wrap: wrap; align-items: flex-end;">
+        <div class="form-group" style="margin: 0;">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-control" style="min-width: 150px;">
+                <option value="">All Status</option>
+                <option value="pending" {% if current_status=='pending' %}selected{% endif %}>Pending</option>
+                <option value="accepted" {% if current_status=='accepted' %}selected{% endif %}>Accepted</option>
+                <option value="rejected" {% if current_status=='rejected' %}selected{% endif %}>Rejected</option>
+            </select>
+        </div>
+
+        <div class="form-group" style="margin: 0;">
+            <label class="form-label">Department</label>
+            <select name="department" class="form-control" style="min-width: 200px;">
+                <option value="">All Departments</option>
+                {% for dept in departments %}
+                <option value="{{ dept.id }}" {% if current_dept==dept.id|string %}selected{% endif %}>{{ dept.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a href="{{ url_for('admin.applications') }}" class="btn btn-secondary">Clear</a>
+    </form>
+</div>
+
+<!-- Applications Table -->
+{% if applications %}
+<div class="table-wrapper">
+    <table>
+        <thead>
+            <tr>
+                <th>Student</th>
+                <th>Email</th>
+                <th>Reg No</th>
+                <th>Branch</th>
+                <th>Department</th>
+                <th>Position</th>
+                <th>Applied</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for app in applications %}
+            <tr>
+                <td><strong>{{ app.student.name or 'No name' }}</strong></td>
+                <td>{{ app.student.email }}</td>
+                <td>{{ app.student.reg_no or '-' }}</td>
+                <td>{{ app.student.branch or '-' }}</td>
+                <td>{{ app.department.name }}</td>
+                <td>{{ app.position or '-' }}</td>
+                <td>{{ app.applied_at.strftime('%b %d, %Y') }}</td>
+                <td><span class="badge badge-{{ app.status }}">{{ app.status|capitalize }}</span></td>
+                <td>
+                    <div class="flex gap-sm">
+                        {% if app.status != 'accepted' %}
+                        <form method="POST"
+                            action="{{ url_for('admin.update_application_status', app_id=app.id, status='accepted') }}">
+                            <button type="submit" class="btn btn-success btn-sm">Accept</button>
+                        </form>
+                        {% endif %}
+                        {% if app.status != 'rejected' %}
+                        <form method="POST"
+                            action="{{ url_for('admin.update_application_status', app_id=app.id, status='rejected') }}">
+                            <button type="submit" class="btn btn-danger btn-sm">Reject</button>
+                        </form>
+                        {% endif %}
+                        {% if app.status != 'pending' %}
+                        <form method="POST"
+                            action="{{ url_for('admin.update_application_status', app_id=app.id, status='pending') }}">
+                            <button type="submit" class="btn btn-secondary btn-sm">Reset</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<p class="text-muted mt-md">Showing {{ applications|length }} application(s)</p>
+{% else %}
+<div class="glass-card text-center" style="max-width: 500px; margin: 0 auto;">
+    <h3>No Applications Found</h3>
+    <p class="text-muted mt-md">
+        {% if current_status or current_dept %}
+        Try adjusting your filters
+        {% else %}
+        No students have applied yet
+        {% endif %}
+    </p>
+</div>
+{% endif %}
+{% endblock %}
