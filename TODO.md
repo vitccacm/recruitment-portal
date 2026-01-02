@@ -12,6 +12,8 @@ This document tracks planned features, improvements, and technical debt for the 
   - Student slot booking system.
   - Jitsi Meet integration for in-platform interviews.
   - Interview staging/waiting area.
+- [ ] **Auth UI Improvement:**
+  - Show "Sign in and sign up disabled by admin" message when both auth methods are turned off.
 
 ### Department Administration
 - [ ] **Notes System:**
