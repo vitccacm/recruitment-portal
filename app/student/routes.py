@@ -5,7 +5,7 @@ from werkzeug.utils import secure_filename
 import os
 from . import bp
 from .forms import ProfileForm, ApplicationForm
-from ..models import db, Student, Department, Application, Round, RoundDepartment, RoundCandidate, DepartmentQuestion, QuestionResponse
+from ..models import db, Student, Department, Application, Round, RoundDepartment, RoundCandidate, DepartmentQuestion, QuestionResponse, ProfileField
 
 
 def student_required(f):
@@ -48,18 +48,36 @@ def dashboard():
 def profile():
     """View and edit profile"""
     form = ProfileForm(obj=current_user)
+    custom_fields = ProfileField.query.filter_by(is_enabled=True).order_by(ProfileField.order).all()
     
-    if form.validate_on_submit():
+    if request.method == 'POST':
         current_user.name = form.name.data
         current_user.reg_no = form.reg_no.data
         current_user.batch = form.batch.data
         current_user.phone = form.phone.data
         current_user.branch = form.branch.data
+        
+        # Save custom field values as JSON in extra_data
+        extra_data = {}
+        for field in custom_fields:
+            value = request.form.get(f'custom_{field.field_name}', '')
+            if value:
+                extra_data[field.field_name] = value
+        current_user.extra_data = str(extra_data) if extra_data else None
+        
         db.session.commit()
         flash('Profile updated successfully!', 'success')
         return redirect(url_for('student.dashboard'))
     
-    return render_template('student/profile.html', form=form)
+    # Parse existing extra_data
+    existing_extra = {}
+    if current_user.extra_data:
+        try:
+            existing_extra = eval(current_user.extra_data)
+        except:
+            pass
+    
+    return render_template('student/profile.html', form=form, custom_fields=custom_fields, existing_extra=existing_extra)
 
 
 @bp.route('/departments')

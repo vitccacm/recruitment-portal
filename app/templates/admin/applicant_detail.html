@@ -1,0 +1,109 @@
+{% extends "admin/base.html" %}
+{% block title %}Applicant Details{% endblock %}
+
+{% block content %}
+<a href="javascript:history.back()" class="btn btn-secondary btn-sm mb-lg">← Back</a>
+
+<div class="flex justify-between items-center mb-xl">
+    <div>
+        <h1 class="page-title"><span class="gradient-text">{{ student.name or 'Applicant' }}</span></h1>
+        <p class="page-subtitle">Applied to {{ application.department.name }} for {{ application.position or 'General'
+            }}</p>
+    </div>
+    <span class="badge badge-{{ application.status }}">{{ application.status|capitalize }}</span>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+    <!-- Student Info -->
+    <div class="glass-card">
+        <h3 class="mb-md">Profile Information</h3>
+        <div style="display: grid; gap: 0.75rem;">
+            <div>
+                <span class="text-muted" style="font-size: 0.75rem;">EMAIL</span><br>
+                <strong>{{ student.email }}</strong>
+            </div>
+            <div>
+                <span class="text-muted" style="font-size: 0.75rem;">REGISTRATION NO</span><br>
+                <strong>{{ student.reg_no or '-' }}</strong>
+            </div>
+            <div>
+                <span class="text-muted" style="font-size: 0.75rem;">BATCH</span><br>
+                <strong>{{ student.batch or '-' }}</strong>
+            </div>
+            <div>
+                <span class="text-muted" style="font-size: 0.75rem;">BRANCH</span><br>
+                <strong>{{ student.branch or '-' }}</strong>
+            </div>
+            <div>
+                <span class="text-muted" style="font-size: 0.75rem;">PHONE</span><br>
+                <strong>{{ student.phone or '-' }}</strong>
+            </div>
+
+            {% for key, value in extra_data.items() %}
+            <div>
+                <span class="text-muted" style="font-size: 0.75rem;">{{ key|upper|replace('_', ' ') }}</span><br>
+                <strong>{{ value }}</strong>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Application Info -->
+    <div class="glass-card">
+        <h3 class="mb-md">Application Details</h3>
+        <div style="display: grid; gap: 0.75rem;">
+            <div>
+                <span class="text-muted" style="font-size: 0.75rem;">POSITION</span><br>
+                <strong>{{ application.position or 'Not specified' }}</strong>
+            </div>
+            <div>
+                <span class="text-muted" style="font-size: 0.75rem;">APPLIED ON</span><br>
+                <strong>{{ application.applied_at.strftime('%B %d, %Y at %I:%M %p') }}</strong>
+            </div>
+            {% if application.cover_letter %}
+            <div>
+                <span class="text-muted" style="font-size: 0.75rem;">COVER LETTER</span><br>
+                <p
+                    style="background: var(--bg-secondary); padding: 0.75rem; border-radius: 0.5rem; margin-top: 0.5rem;">
+                    {{ application.cover_letter }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Question Responses -->
+{% if questions %}
+<div class="glass-card mt-lg">
+    <h3 class="mb-md">Question Responses</h3>
+    <div style="display: grid; gap: 1rem;">
+        {% for q in questions %}
+        <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 0.5rem;">
+            <div class="flex gap-sm items-center mb-sm">
+                <strong>{{ q.question_text }}</strong>
+                {% if q.is_required %}
+                <span class="badge badge-ended" style="font-size: 0.65rem;">Required</span>
+                {% endif %}
+            </div>
+
+            {% set response = responses.get(q.id) %}
+            {% if response %}
+            {% if response.file_path %}
+            <a href="{{ url_for('static', filename=response.file_path) }}" target="_blank"
+                class="btn btn-secondary btn-sm">
+                📎 View File
+            </a>
+            {% elif response.response_text %}
+            <p class="text-muted">{{ response.response_text }}</p>
+            {% else %}
+            <p class="text-muted">No response</p>
+            {% endif %}
+            {% else %}
+            <p class="text-muted">No response</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

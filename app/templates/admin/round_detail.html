@@ -107,6 +107,10 @@
                     {{ 'Hide Notes' if ds.state.notes_public else 'Show Notes' }}
                 </button>
             </form>
+            <a href="{{ url_for('admin.round_candidates', round_id=round.id, dept_id=ds.department.id) }}"
+                class="btn btn-primary btn-sm">
+                View Candidates
+            </a>
         </div>
     </div>
     {% endfor %}

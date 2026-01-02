@@ -107,8 +107,8 @@
                 </td>
                 <td>
                     <div class="flex gap-sm">
-                        <a href="{{ url_for('student.profile', student_id=app.student.id) if app.student else '#' }}"
-                            target="_blank" class="btn btn-secondary btn-sm">View</a>
+                        <a href="{{ url_for('admin.applicant_detail', app_id=app.id) }}" target="_blank"
+                            class="btn btn-secondary btn-sm">View</a>
                         <button type="button" class="btn btn-secondary btn-sm"
                             onclick="openNotesModal({{ app.id }}, {{ (rc.notes or '')|tojson }})" {% if state.is_locked
                             %}disabled{% endif %}>

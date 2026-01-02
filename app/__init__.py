@@ -1,6 +1,6 @@
 import os
-from flask import Flask
-from flask_login import LoginManager
+from flask import Flask, make_response
+from flask_login import LoginManager, current_user
 from flask_wtf.csrf import CSRFProtect
 from .config import Config
 from .models import db, Admin, Student
@@ -29,6 +29,15 @@ def create_app(config_class=Config):
         elif user_id.startswith('student_'):
             return Student.query.get(int(user_id.split('_')[1]))
         return None
+    
+    # Prevent caching of authenticated pages (security: no back button access after logout)
+    @app.after_request
+    def add_no_cache_headers(response):
+        if current_user.is_authenticated:
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, private'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+        return response
     
     # Ensure upload folder exists
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)

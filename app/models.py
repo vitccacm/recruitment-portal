@@ -56,6 +56,7 @@ class Student(UserMixin, db.Model):
     branch = db.Column(db.String(50))
     profile_picture = db.Column(db.String(500))
     is_verified = db.Column(db.Boolean, default=False)  # Email verification
+    extra_data = db.Column(db.Text)  # JSON for custom profile fields
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships

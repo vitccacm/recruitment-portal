@@ -695,3 +695,81 @@ def delete_dept_question(dept_id, q_id):
     db.session.commit()
     flash('Question deleted.', 'success')
     return redirect(url_for('admin.dept_questions', dept_id=dept_id))
+
+
+# ============ APPLICANT DETAIL VIEW ============
+
+@bp.route('/applicant/<int:app_id>')
+@login_required
+@admin_required
+def applicant_detail(app_id):
+    """View detailed applicant information"""
+    from ..models import QuestionResponse
+    application = Application.query.get_or_404(app_id)
+    
+    # Check permission for dept admin
+    if current_user.role == 'dept_admin' and current_user.department_id != application.department_id:
+        flash('Access denied. You can only view applicants for your department.', 'error')
+        return redirect(url_for('admin.dashboard'))
+        
+    student = application.student
+    
+    # Get question responses for this application
+    responses = QuestionResponse.query.filter_by(application_id=app_id).all()
+    response_dict = {r.question_id: r for r in responses}
+    
+    # Get custom questions for this department
+    questions = DepartmentQuestion.query.filter_by(department_id=application.department_id).order_by(DepartmentQuestion.order).all()
+    
+    # Parse extra_data
+    extra_data = {}
+    if student.extra_data:
+        try:
+            extra_data = eval(student.extra_data)
+        except:
+            pass
+    
+    return render_template('admin/applicant_detail.html', 
+                         application=application, 
+                         student=student,
+                         questions=questions,
+                         responses=response_dict,
+                         extra_data=extra_data)
+
+
+@bp.route('/round/<int:round_id>/dept/<int:dept_id>/candidates')
+@login_required
+@super_admin_required
+def round_candidates(round_id, dept_id):
+    """View candidates for a specific round and department"""
+    round_obj = Round.query.get_or_404(round_id)
+    department = Department.query.get_or_404(dept_id)
+    
+    # Get round-department state
+    rd = RoundDepartment.query.filter_by(round_id=round_id, department_id=dept_id).first()
+    
+    # Get eligible applications (improved logic could go here)
+    # For now, roughly same as dept logic
+    if round_obj.prerequisite_id:
+        # Get apps passed in prerequisite
+        prev_round_candidates = RoundCandidate.query.join(Application).filter(
+            RoundCandidate.round_id == round_obj.prerequisite_id,
+            RoundCandidate.status == 'selected',
+            Application.department_id == dept_id
+        ).all()
+        eligible_app_ids = [rc.application_id for rc in prev_round_candidates]
+        eligible_apps = Application.query.filter(Application.id.in_(eligible_app_ids)).all()
+    else:
+        # First round - all dept applications
+        eligible_apps = Application.query.filter_by(department_id=dept_id).all()
+
+    # Get current candidates status
+    candidates = RoundCandidate.query.filter_by(round_id=round_id).all()
+    candidates_dict = {c.application_id: c for c in candidates}
+    
+    return render_template('admin/round_candidates.html', 
+                         round=round_obj, 
+                         department=department,
+                         state=rd,
+                         eligible_apps=eligible_apps, 
+                         candidates=candidates_dict)

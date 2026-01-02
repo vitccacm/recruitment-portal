@@ -83,6 +83,48 @@
                     {% endfor %}
                 </div>
 
+                <!-- Custom Profile Fields -->
+                {% if custom_fields %}
+                <h4 class="mb-md mt-xl" style="border-top: 1px solid var(--border-color); padding-top: 1rem;">Additional
+                    Information</h4>
+
+                {% for field in custom_fields %}
+                <div class="form-group">
+                    <label class="form-label">{{ field.label }}{% if field.is_required %} *{% endif %}</label>
+
+                    {% if field.field_type == 'text' %}
+                    <input type="text" name="custom_{{ field.field_name }}" class="form-control"
+                        value="{{ existing_extra.get(field.field_name, '') }}" {% if field.is_required %}required{%
+                        endif %}>
+
+                    {% elif field.field_type == 'textarea' %}
+                    <textarea name="custom_{{ field.field_name }}" class="form-control" rows="3" {% if field.is_required
+                        %}required{% endif %}>{{ existing_extra.get(field.field_name, '') }}</textarea>
+
+                    {% elif field.field_type == 'number' %}
+                    <input type="number" name="custom_{{ field.field_name }}" class="form-control"
+                        value="{{ existing_extra.get(field.field_name, '') }}" {% if field.is_required %}required{%
+                        endif %}>
+
+                    {% elif field.field_type == 'url' %}
+                    <input type="url" name="custom_{{ field.field_name }}" class="form-control" placeholder="https://"
+                        value="{{ existing_extra.get(field.field_name, '') }}" {% if field.is_required %}required{%
+                        endif %}>
+
+                    {% elif field.field_type == 'select' %}
+                    <select name="custom_{{ field.field_name }}" class="form-control" {% if field.is_required
+                        %}required{% endif %}>
+                        <option value="">Select...</option>
+                        {% for opt in field.options.split(',') %}
+                        <option value="{{ opt.strip() }}" {% if existing_extra.get(field.field_name)==opt.strip()
+                            %}selected{% endif %}>{{ opt.strip() }}</option>
+                        {% endfor %}
+                    </select>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% endif %}
+
                 <div class="flex gap-md mt-xl">
                     <button type="submit" class="btn btn-primary" style="flex: 1;">Save Profile</button>
                     <a href="{{ url_for('student.dashboard') }}" class="btn btn-secondary">Cancel</a>

@@ -16,6 +16,7 @@
                 Department</a>
             <form method="POST" action="{{ url_for('admin.delete_department', dept_id=department.id) }}"
                 onsubmit="return confirm('Are you sure you want to delete this department? This will also delete all applications.');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-danger">Delete</button>
             </form>
         </div>
@@ -108,12 +109,14 @@
                             {% if app.status != 'accepted' %}
                             <form method="POST"
                                 action="{{ url_for('admin.update_application_status', app_id=app.id, status='accepted') }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-success btn-sm">Accept</button>
                             </form>
                             {% endif %}
                             {% if app.status != 'rejected' %}
                             <form method="POST"
                                 action="{{ url_for('admin.update_application_status', app_id=app.id, status='rejected') }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                 <button type="submit" class="btn btn-danger btn-sm">Reject</button>
                             </form>
                             {% endif %}

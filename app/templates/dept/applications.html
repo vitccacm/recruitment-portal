@@ -24,7 +24,9 @@
         <tbody>
             {% for app in applications %}
             <tr>
-                <td><strong>{{ app.student.name or 'No name' }}</strong></td>
+                <td><strong><a href="{{ url_for('admin.applicant_detail', app_id=app.id) }}"
+                            style="color: inherit; text-decoration: underline;">{{ app.student.name or 'No name'
+                            }}</a></strong></td>
                 <td>{{ app.student.email }}</td>
                 <td>{{ app.student.reg_no or '-' }}</td>
                 <td>{{ app.student.branch or '-' }}</td>
