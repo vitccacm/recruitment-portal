@@ -80,6 +80,71 @@
     </div>
 </section>
 
+<!-- Membership CTA Section -->
+<section class="page">
+    <div class="container" style="max-width: 900px;">
+        <div style="background: linear-gradient(135deg, rgba(0, 133, 202, 0.15) 0%, rgba(0, 198, 255, 0.1) 100%); border: 1px solid var(--border-glow); border-radius: var(--radius-lg); padding: var(--space-3xl); text-align: center;">
+            <h3 style="margin-bottom: 1rem; font-size: 1.8rem;">Ready to Join ACM?</h3>
+            <p class="text-muted" style="font-size: 1.05rem; margin-bottom: var(--space-xl); max-width: 600px; margin-left: auto; margin-right: auto;">
+                Become a member of ACM VIT Chennai and unlock exclusive benefits, connect with nearly 100,000 computing professionals worldwide, and shape the future of technology.
+            </p>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-lg); margin-bottom: var(--space-xl);">
+                <div>
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🌐</div>
+                    <p class="text-muted" style="font-size: 0.9rem;">Global Network of 100k+ Peers</p>
+                </div>
+                <div>
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">📚</div>
+                    <p class="text-muted" style="font-size: 0.9rem;">Access to Premium Resources</p>
+                </div>
+                <div>
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">💼</div>
+                    <p class="text-muted" style="font-size: 0.9rem;">Career & Job Opportunities</p>
+                </div>
+                <div>
+                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🏆</div>
+                    <p class="text-muted" style="font-size: 0.9rem;">Recognition & Leadership</p>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: var(--space-md); justify-content: center; flex-wrap: wrap;">
+                <button onclick="openMembershipModal()" class="btn btn-primary">Become a Member</button>
+                <a href="{{ url_for('main.membership') }}" class="btn btn-secondary">Learn More</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal for quick signup -->
+<div id="membershipModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center;">
+    <div class="glass-card" style="width: 90%; max-width: 400px; padding: var(--space-2xl);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-lg);">
+            <h3>Join ACM Membership</h3>
+            <button onclick="closeMembershipModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">×</button>
+        </div>
+        
+        <form id="membershipForm" onsubmit="submitMembershipForm(event)">
+            <div style="margin-bottom: var(--space-lg);">
+                <label style="display: block; margin-bottom: var(--space-sm); font-weight: 500;">Name</label>
+                <input type="text" id="membershipName" name="name" required style="width: 100%; padding: var(--space-md); background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); color: var(--text-primary);" placeholder="Your full name">
+            </div>
+            
+            <div style="margin-bottom: var(--space-lg);">
+                <label style="display: block; margin-bottom: var(--space-sm); font-weight: 500;">Email</label>
+                <input type="email" id="membershipEmail" name="email" required style="width: 100%; padding: var(--space-md); background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); color: var(--text-primary);" placeholder="your.email@example.com">
+            </div>
+            
+            <div id="membershipMessage" style="margin-bottom: var(--space-lg); display: none; padding: var(--space-md); border-radius: var(--radius-md); text-align: center;"></div>
+            
+            <div style="display: flex; gap: var(--space-md);">
+                <button type="button" onclick="closeMembershipModal()" class="btn btn-secondary" style="flex: 1;">Cancel</button>
+                <button type="submit" class="btn btn-primary" style="flex: 1;">Join Now</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Stats Section -->
 <section style="padding: 4rem 0; background: var(--bg-secondary);">
     <div class="container">
@@ -103,4 +168,66 @@
         </div>
     </div>
 </section>
+
+<script>
+function openMembershipModal() {
+    document.getElementById('membershipModal').style.display = 'flex';
+    document.getElementById('membershipForm').reset();
+    document.getElementById('membershipMessage').style.display = 'none';
+}
+
+function closeMembershipModal() {
+    document.getElementById('membershipModal').style.display = 'none';
+    document.getElementById('membershipMessage').style.display = 'none';
+}
+
+function submitMembershipForm(event) {
+    event.preventDefault();
+    
+    const name = document.getElementById('membershipName').value;
+    const email = document.getElementById('membershipEmail').value;
+    const messageDiv = document.getElementById('membershipMessage');
+    
+    fetch('{{ url_for("main.join_membership") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            name: name,
+            email: email
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        messageDiv.style.display = 'block';
+        if (data.success) {
+            messageDiv.style.background = 'rgba(0, 215, 126, 0.1)';
+            messageDiv.style.color = 'var(--success)';
+            messageDiv.textContent = data.message;
+            document.getElementById('membershipForm').reset();
+            setTimeout(() => {
+                closeMembershipModal();
+            }, 2000);
+        } else {
+            messageDiv.style.background = 'rgba(230, 55, 87, 0.1)';
+            messageDiv.style.color = 'var(--error)';
+            messageDiv.textContent = data.message;
+        }
+    })
+    .catch(error => {
+        messageDiv.style.display = 'block';
+        messageDiv.style.background = 'rgba(230, 55, 87, 0.1)';
+        messageDiv.style.color = 'var(--error)';
+        messageDiv.textContent = 'An error occurred. Please try again.';
+    });
+}
+
+// Close modal when clicking outside
+document.getElementById('membershipModal').addEventListener('click', function(event) {
+    if (event.target === this) {
+        closeMembershipModal();
+    }
+});
+</script>
 {% endblock %}
