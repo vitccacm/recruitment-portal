@@ -1,5 +1,5 @@
 import os
-from flask import Flask, make_response, request
+from flask import Flask, make_response, request, render_template
 from flask_login import LoginManager, current_user
 from flask_wtf.csrf import CSRFProtect
 from .config import Config
@@ -68,5 +68,10 @@ def create_app(config_class=Config):
             admin.set_password('admin123')
             db.session.add(admin)
             db.session.commit()
+    
+    # Custom error handlers
+    @app.errorhandler(404)
+    def page_not_found(e):
+        return render_template('errors/404.html'), 404
     
     return app
