@@ -9,8 +9,9 @@ export async function signInWithGoogle() {
         // Get ID token
         const idToken = await user.getIdToken();
 
-        // Get the base path from current URL (handles /join/ subdirectory)
-        const basePath = window.location.pathname.split('/auth/')[0];
+        // Detect if running under /join subdirectory
+        const isSubdir = window.location.pathname.startsWith('/join');
+        const basePath = isSubdir ? '/join' : '';
 
         // Send token to backend for verification
         const response = await fetch(basePath + '/auth/google-login', {
@@ -45,15 +46,16 @@ export async function handleSignOut() {
     try {
         await signOut(auth);
 
-        // Get the base path from current URL
-        const basePath = window.location.pathname.split('/auth/')[0];
+        // Detect if running under /join subdirectory
+        const isSubdir = window.location.pathname.startsWith('/join');
+        const basePath = isSubdir ? '/join' : '';
 
         // Call backend logout
         const response = await fetch(basePath + '/auth/logout', {
             method: 'POST'
         });
 
-        window.location.href = '/';
+        window.location.href = basePath + '/';
     } catch (error) {
         console.error('Error during sign-out:', error);
         showMessage('Sign-out failed', 'error');
