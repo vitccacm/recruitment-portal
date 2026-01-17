@@ -4,12 +4,12 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from "https://w
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyC3LKoXvKYAGuFf61Y1chAC2OxXTy2CuVU",
-  authDomain: "acm-recruitment-4886d.firebaseapp.com",
-  projectId: "acm-recruitment-4886d",
-  storageBucket: "acm-recruitment-4886d.firebasestorage.app",
-  messagingSenderId: "518012931766",
-  appId: "1:518012931766:web:afe6f92b35eb570c83a017"
+  apiKey: "AIzaSyDyuJVJaeYZ9E3Lah_V0NKVDB8eARZvkKA",
+  authDomain: "acm-recuitement.firebaseapp.com",
+  projectId: "acm-recuitement",
+  storageBucket: "acm-recuitement.firebasestorage.app",
+  messagingSenderId: "453332055457",
+  appId: "1:453332055457:web:cc35dc29e5537ee8c707e0"
 };
 
 // Initialize Firebase
