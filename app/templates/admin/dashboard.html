@@ -35,10 +35,39 @@
             + Add Department
         </a>
         <a href="{{ url_for('admin.applications') }}" class="btn btn-secondary">
-            Review Applications
+            📋 Review Applications
         </a>
         <a href="{{ url_for('admin.departments') }}" class="btn btn-secondary">
-            Manage Departments
+            🏢 Departments
+        </a>
+        <a href="{{ url_for('admin.students') }}" class="btn btn-secondary">
+            👥 Students
+        </a>
+        <a href="{{ url_for('admin.memberships') }}" class="btn btn-secondary">
+            📝 Memberships
+        </a>
+        <a href="{{ url_for('admin.rounds') }}" class="btn btn-secondary">
+            🎯 Rounds
+        </a>
+    </div>
+</div>
+
+<!-- Quick Links Grid -->
+<div class="glass-card mb-xl">
+    <h3 class="mb-lg">Management</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <a href="{{ url_for('admin.accounts') }}" class="stat-card" style="text-decoration: none; cursor: pointer;">
+            <div class="stat-value" style="font-size: 1.5rem;">⚙️</div>
+            <div class="stat-label">Accounts</div>
+        </a>
+        <a href="{{ url_for('admin.settings') }}" class="stat-card" style="text-decoration: none; cursor: pointer;">
+            <div class="stat-value" style="font-size: 1.5rem;">🔧</div>
+            <div class="stat-label">Settings</div>
+        </a>
+        <a href="{{ url_for('admin.profile_fields') }}" class="stat-card"
+            style="text-decoration: none; cursor: pointer;">
+            <div class="stat-value" style="font-size: 1.5rem;">📝</div>
+            <div class="stat-label">Profile Fields</div>
         </a>
     </div>
 </div>

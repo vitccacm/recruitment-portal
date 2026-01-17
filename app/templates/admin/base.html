@@ -43,6 +43,12 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ url_for('admin.students') }}" {% if 'student' in request.endpoint %}class="active"
+                            {% endif %}>
+                            Students
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ url_for('admin.accounts') }}" {% if 'account' in request.endpoint %}class="active"
                             {% endif %}>
                             Accounts

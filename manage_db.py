@@ -27,6 +27,7 @@ def print_menu():
     print("  4. Reset database (DANGEROUS - drops all tables)")
     print("  5. Change Super Admin credentials")
     print("  6. Initialize database (first-time setup)")
+    print("  7. Sync/Migrate all tables (add missing tables)")
     print("  0. Exit")
     print()
 
@@ -376,6 +377,50 @@ def initialize_database(app):
             print(f"\n✓ Database initialized. Super admin already exists: {existing_admin.email}")
 
 
+def sync_migrate_tables(app):
+    """Sync/migrate all tables - adds any missing tables from models"""
+    print("\n--- Sync/Migrate All Tables ---")
+    
+    with app.app_context():
+        from sqlalchemy import inspect
+        from app import models  # Import all models to ensure they're registered
+        
+        inspector = inspect(db.engine)
+        existing_tables = set(inspector.get_table_names())
+        
+        # Get all model tables from metadata
+        model_tables = set(db.metadata.tables.keys())
+        
+        print(f"\nExisting tables in database: {len(existing_tables)}")
+        print(f"Tables defined in models: {len(model_tables)}")
+        
+        # Find missing tables
+        missing_tables = model_tables - existing_tables
+        
+        if missing_tables:
+            print(f"\n⚠️  Missing tables: {', '.join(missing_tables)}")
+            proceed = input("Create missing tables? (y/n): ").strip().lower()
+            if proceed == 'y':
+                db.create_all()
+                print("\n✓ Tables synced successfully!")
+                
+                # Verify
+                new_tables = set(inspector.get_table_names())
+                added = new_tables - existing_tables
+                print(f"✓ Added {len(added)} tables: {', '.join(added) if added else 'None'}")
+            else:
+                print("Sync cancelled.")
+        else:
+            print("\n✓ All tables are up to date. No migration needed.")
+        
+        # Show current table summary
+        print("\n--- Current Tables ---")
+        final_tables = inspector.get_table_names()
+        for table in sorted(final_tables):
+            columns = inspector.get_columns(table)
+            print(f"  {table}: {len(columns)} columns")
+
+
 def main():
     app = create_app()
     
@@ -385,7 +430,7 @@ def main():
         print_menu()
         
         try:
-            choice = input("Enter choice (0-6): ").strip()
+            choice = input("Enter choice (0-7): ").strip()
         except (KeyboardInterrupt, EOFError):
             print("\n\nExiting...")
             break
@@ -405,6 +450,8 @@ def main():
             change_super_admin_credentials(app)
         elif choice == '6':
             initialize_database(app)
+        elif choice == '7':
+            sync_migrate_tables(app)
         else:
             print("Invalid choice. Please try again.")
 

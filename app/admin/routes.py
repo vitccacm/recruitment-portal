@@ -804,6 +804,44 @@ def round_candidates(round_id, dept_id):
                          candidates=candidates_dict)
 
 
+# ============ STUDENTS MANAGEMENT ============
+
+@bp.route('/students')
+@login_required
+@super_admin_required
+def students():
+    """View all signed up students"""
+    status_filter = request.args.get('status', 'all')
+    
+    query = Student.query
+    
+    # Filter based on profile completion
+    all_students = Student.query.all()
+    complete_students = [s for s in all_students if s.profile_completion >= 75]
+    incomplete_students = [s for s in all_students if s.profile_completion < 75]
+    
+    if status_filter == 'complete':
+        students = complete_students
+    elif status_filter == 'incomplete':
+        students = incomplete_students
+    else:
+        students = all_students
+    
+    # Sort by created_at descending
+    students = sorted(students, key=lambda x: x.created_at, reverse=True)
+    
+    counts = {
+        'total': len(all_students),
+        'complete': len(complete_students),
+        'incomplete': len(incomplete_students)
+    }
+    
+    return render_template('admin/students.html', 
+                         students=students,
+                         current_status=status_filter,
+                         counts=counts)
+
+
 # ============ MEMBERSHIPS MANAGEMENT ============
 
 @bp.route('/memberships')

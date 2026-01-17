@@ -47,11 +47,23 @@ def dashboard():
 @student_required
 def profile():
     """View and edit profile"""
-    form = ProfileForm(obj=current_user)
+    form = ProfileForm()
     custom_fields = ProfileField.query.filter_by(is_enabled=True).order_by(ProfileField.order).all()
     
-    if request.method == 'POST':
-        current_user.name = form.name.data
+    # Split existing name into first/last for form population
+    if request.method == 'GET':
+        if current_user.name:
+            name_parts = current_user.name.split(' ', 1)
+            form.first_name.data = name_parts[0]
+            form.last_name.data = name_parts[1] if len(name_parts) > 1 else ''
+        form.reg_no.data = current_user.reg_no
+        form.batch.data = current_user.batch
+        form.phone.data = current_user.phone
+        form.branch.data = current_user.branch
+    
+    if request.method == 'POST' and form.validate_on_submit():
+        # Combine first and last name into full name
+        current_user.name = f"{form.first_name.data.strip()} {form.last_name.data.strip()}".strip()
         current_user.reg_no = form.reg_no.data
         current_user.batch = form.batch.data
         current_user.phone = form.phone.data

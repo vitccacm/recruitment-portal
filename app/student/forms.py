@@ -30,9 +30,13 @@ BATCH_CHOICES = [
 
 class ProfileForm(FlaskForm):
     """Form for student profile completion"""
-    name = StringField('Full Name', validators=[
-        DataRequired(message='Name is required'),
-        Length(min=2, max=100, message='Name must be between 2 and 100 characters')
+    first_name = StringField('First Name', validators=[
+        DataRequired(message='First name is required'),
+        Length(min=1, max=50, message='First name must be between 1 and 50 characters')
+    ])
+    last_name = StringField('Last Name', validators=[
+        DataRequired(message='Last name is required'),
+        Length(min=1, max=50, message='Last name must be between 1 and 50 characters')
     ])
     reg_no = StringField('Registration Number', validators=[
         DataRequired(message='Registration number is required'),

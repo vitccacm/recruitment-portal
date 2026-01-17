@@ -1,0 +1,85 @@
+{% extends "admin/base.html" %}
+{% block title %}Students{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Registered <span class="gradient-text">Students</span></h1>
+    <p class="text-muted">All students who have signed up on the portal</p>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid mb-xl" style="grid-template-columns: repeat(3, 1fr);">
+    <div class="stat-card">
+        <div class="stat-value">{{ counts.total }}</div>
+        <div class="stat-label">Total Students</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ counts.complete }}</div>
+        <div class="stat-label">Profile Complete</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ counts.incomplete }}</div>
+        <div class="stat-label">Profile Incomplete</div>
+    </div>
+</div>
+
+<!-- Filter Tabs -->
+<div class="tabs" style="margin-bottom: 1.5rem;">
+    <a href="{{ url_for('admin.students', status='all') }}"
+        class="tab {% if current_status == 'all' %}active{% endif %}">
+        All ({{ counts.total }})
+    </a>
+    <a href="{{ url_for('admin.students', status='complete') }}"
+        class="tab {% if current_status == 'complete' %}active{% endif %}">
+        Complete ({{ counts.complete }})
+    </a>
+    <a href="{{ url_for('admin.students', status='incomplete') }}"
+        class="tab {% if current_status == 'incomplete' %}active{% endif %}">
+        Incomplete ({{ counts.incomplete }})
+    </a>
+</div>
+
+{% if students %}
+<!-- Students Table -->
+<div class="glass-card" style="padding: 0; overflow-x: auto;">
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Reg No</th>
+                <th>Branch</th>
+                <th>Batch</th>
+                <th>Profile</th>
+                <th>Joined</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in students %}
+            <tr>
+                <td><strong>{{ s.name or 'Not set' }}</strong></td>
+                <td>
+                    <a href="mailto:{{ s.email }}" style="color: var(--acm-blue);">{{ s.email }}</a>
+                </td>
+                <td>{{ s.reg_no or '-' }}</td>
+                <td>{{ s.branch or '-' }}</td>
+                <td>{{ s.batch or '-' }}</td>
+                <td>
+                    {% if s.profile_completion >= 75 %}
+                    <span class="badge badge-open">{{ s.profile_completion }}%</span>
+                    {% else %}
+                    <span class="badge badge-upcoming">{{ s.profile_completion }}%</span>
+                    {% endif %}
+                </td>
+                <td>{{ s.created_at.strftime('%b %d, %Y') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="glass-card text-center">
+    <p class="text-muted">No students found.</p>
+</div>
+{% endif %}
+{% endblock %}
