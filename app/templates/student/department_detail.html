@@ -26,6 +26,11 @@
                     </span>
                     {% elif department.is_accepting_applications %}
                     <span class="badge badge-open" style="font-size: 0.9rem; padding: 0.5rem 1rem;">● Open</span>
+                    {% elif department.recruitment_status == 'upcoming' %}
+                    <span class="badge badge-upcoming" style="font-size: 0.9rem; padding: 0.5rem 1rem;">◷ Coming
+                        Soon</span>
+                    {% else %}
+                    <span class="badge badge-ended" style="font-size: 0.9rem; padding: 0.5rem 1rem;">● Closed</span>
                     {% endif %}
                 </div>
             </div>
@@ -77,6 +82,12 @@
             {% elif department.is_accepting_applications %}
             <a href="{{ url_for('student.apply', dept_id=department.id) }}" class="btn btn-primary btn-lg">Apply Now
                 →</a>
+            {% elif department.recruitment_status == 'upcoming' %}
+            <button class="btn btn-secondary btn-lg" disabled>Applications Opening Soon</button>
+            {% if department.recruitment_start %}
+            <p class="text-muted mt-md">Applications will open on {{ department.recruitment_start.strftime('%B %d, %Y at
+                %I:%M %p') }}</p>
+            {% endif %}
             {% else %}
             <button class="btn btn-secondary btn-lg" disabled>Applications Closed</button>
             {% endif %}
