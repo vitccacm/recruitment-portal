@@ -137,7 +137,7 @@
 <!-- Modal for quick signup -->
 <div id="membershipModal"
     style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center;">
-    <div class="glass-card" style="width: 90%; max-width: 400px; padding: var(--space-2xl);">
+    <div class="glass-card" style="width: 90%; max-width: 450px; padding: var(--space-2xl);">
         <div
             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-lg);">
             <h3>Join ACM Membership</h3>
@@ -146,11 +146,20 @@
         </div>
 
         <form id="membershipForm" onsubmit="submitMembershipForm(event)">
-            <div style="margin-bottom: var(--space-lg);">
-                <label style="display: block; margin-bottom: var(--space-sm); font-weight: 500;">Name</label>
-                <input type="text" id="membershipName" name="name" required
-                    style="width: 100%; padding: var(--space-md); background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); color: var(--text-primary);"
-                    placeholder="Your full name">
+            <div
+                style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); margin-bottom: var(--space-lg);">
+                <div>
+                    <label style="display: block; margin-bottom: var(--space-sm); font-weight: 500;">First Name</label>
+                    <input type="text" id="membershipFirstName" name="first_name" required
+                        style="width: 100%; padding: var(--space-md); background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); color: var(--text-primary);"
+                        placeholder="First name">
+                </div>
+                <div>
+                    <label style="display: block; margin-bottom: var(--space-sm); font-weight: 500;">Last Name</label>
+                    <input type="text" id="membershipLastName" name="last_name" required
+                        style="width: 100%; padding: var(--space-md); background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); color: var(--text-primary);"
+                        placeholder="Last name">
+                </div>
             </div>
 
             <div style="margin-bottom: var(--space-lg);">
@@ -212,7 +221,8 @@
     function submitMembershipForm(event) {
         event.preventDefault();
 
-        const name = document.getElementById('membershipName').value;
+        const firstName = document.getElementById('membershipFirstName').value;
+        const lastName = document.getElementById('membershipLastName').value;
         const email = document.getElementById('membershipEmail').value;
         const messageDiv = document.getElementById('membershipMessage');
 
@@ -222,7 +232,8 @@
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                name: name,
+                first_name: firstName,
+                last_name: lastName,
                 email: email
             })
         })

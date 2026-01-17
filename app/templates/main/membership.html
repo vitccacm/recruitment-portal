@@ -5,9 +5,10 @@
 <style>
     /* Section Vertical Rhythm */
     .section-standard {
-        padding: 4rem 0; /* Consistent vertical spacing */
+        padding: 4rem 0;
+        /* Consistent vertical spacing */
     }
-    
+
     .section-small {
         padding: 2rem 0;
     }
@@ -16,8 +17,10 @@
     .features-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 2rem; /* Standardized gap */
-        align-items: stretch; /* Ensures cards are same height */
+        gap: 2rem;
+        /* Standardized gap */
+        align-items: stretch;
+        /* Ensures cards are same height */
     }
 
     /* Card Internal Spacing */
@@ -28,7 +31,7 @@
         height: 100%;
         transition: transform 0.2s ease;
     }
-    
+
     .feature-card:hover {
         transform: translateY(-5px);
     }
@@ -48,11 +51,12 @@
     .benefits-table {
         width: 100%;
         border-collapse: collapse;
-        min-width: 600px; /* Prevents squashing on mobile */
+        min-width: 600px;
+        /* Prevents squashing on mobile */
     }
 
     .benefits-table th {
-        background: rgba(0,0,0,0.2);
+        background: rgba(0, 0, 0, 0.2);
         padding: 1.5rem;
         color: var(--acm-blue);
         font-weight: 600;
@@ -76,17 +80,25 @@
     }
 
     .benefits-table tr:hover td {
-        background: rgba(255,255,255,0.03);
+        background: rgba(255, 255, 255, 0.03);
     }
 
-    .check-mark { color: var(--success); font-weight: bold; font-size: 1.2rem; }
-    .dash-mark { color: var(--text-muted); opacity: 0.5; }
-    
+    .check-mark {
+        color: var(--success);
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+
+    .dash-mark {
+        color: var(--text-muted);
+        opacity: 0.5;
+    }
+
     /* Modal Inputs */
     .form-group {
         margin-bottom: 1.5rem;
     }
-    
+
     .form-input {
         width: 100%;
         padding: 0.75rem 1rem;
@@ -107,28 +119,43 @@
 
 {% block content %}
 
-<div id="joinModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+<div id="joinModal"
+    style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
     <div class="glass-card" style="width: 90%; max-width: 450px; padding: 2.5rem;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
             <h3 style="margin: 0;">Join ACM Membership</h3>
-            <button onclick="closeJoinModal()" style="background: none; border: none; font-size: 2rem; cursor: pointer; color: var(--text-muted); line-height: 1;">&times;</button>
+            <button onclick="closeJoinModal()"
+                style="background: none; border: none; font-size: 2rem; cursor: pointer; color: var(--text-muted); line-height: 1;">&times;</button>
         </div>
-        
+
         <form id="joinForm" onsubmit="submitJoinForm(event)">
-            <div class="form-group">
-                <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Name</label>
-                <input type="text" id="memberName" name="name" class="form-input" required placeholder="Your full name">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">First Name</label>
+                    <input type="text" id="memberFirstName" name="first_name" class="form-input" required
+                        placeholder="First name">
+                </div>
+
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Last Name</label>
+                    <input type="text" id="memberLastName" name="last_name" class="form-input" required
+                        placeholder="Last name">
+                </div>
             </div>
-            
+
             <div class="form-group">
                 <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Email</label>
-                <input type="email" id="memberEmail" name="email" class="form-input" required placeholder="your.email@example.com">
+                <input type="email" id="memberEmail" name="email" class="form-input" required
+                    placeholder="your.email@example.com">
             </div>
-            
-            <div id="formMessage" style="margin-bottom: 1.5rem; display: none; padding: 1rem; border-radius: var(--radius-md); text-align: center; font-size: 0.9rem;"></div>
-            
+
+            <div id="formMessage"
+                style="margin-bottom: 1.5rem; display: none; padding: 1rem; border-radius: var(--radius-md); text-align: center; font-size: 0.9rem;">
+            </div>
+
             <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-                <button type="button" onclick="closeJoinModal()" class="btn btn-secondary" style="flex: 1;">Cancel</button>
+                <button type="button" onclick="closeJoinModal()" class="btn btn-secondary"
+                    style="flex: 1;">Cancel</button>
                 <button type="submit" class="btn btn-primary" style="flex: 1;">Join Now</button>
             </div>
         </form>
@@ -138,16 +165,19 @@
 <section class="hero">
     <div class="hero-content">
         <h1>Join <span class="gradient-text">ACM</span> Membership</h1>
-        <p class="text-muted" style="font-size: 1.25rem; margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+        <p class="text-muted"
+            style="font-size: 1.25rem; margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto;">
             Become part of the dynamic changes shaping the future of computing
         </p>
         <p style="max-width: 700px; margin: 0 auto 2.5rem auto;">
-            There are many reasons to join ACM. When you become a member, you unlock exclusive benefits, world-class resources, and connect with nearly 100,000 dedicated computing professionals and students worldwide.
+            There are many reasons to join ACM. When you become a member, you unlock exclusive benefits, world-class
+            resources, and connect with nearly 100,000 dedicated computing professionals and students worldwide.
         </p>
 
         <div class="hero-buttons">
             <button onclick="openJoinModal()" class="btn btn-primary">Join Now</button>
-            <a href="https://www.acm.org/membership/membership-benefits" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Learn More</a>
+            <a href="https://www.acm.org/membership/membership-benefits" target="_blank" rel="noopener noreferrer"
+                class="btn btn-secondary">Learn More</a>
         </div>
     </div>
 </section>
@@ -157,7 +187,9 @@
         <div class="page-header text-center">
             <h2>Why Join <span class="gradient-text">ACM?</span></h2>
             <p class="page-subtitle" style="margin-top: 1rem;">
-                ACM provides the tools and resources to advance your career and enrich your knowledge with life-long learning. With nearly 100,000 highly dedicated student and professional peers, you'll become part of a global community driving innovation.
+                ACM provides the tools and resources to advance your career and enrich your knowledge with life-long
+                learning. With nearly 100,000 highly dedicated student and professional peers, you'll become part of a
+                global community driving innovation.
             </p>
         </div>
     </div>
@@ -168,36 +200,41 @@
         <div class="page-header text-center" style="margin-bottom: 3rem;">
             <h3>Networking & Community Opportunities</h3>
         </div>
-        
+
         <div class="features-grid">
             <div class="glass-card feature-card">
                 <div class="feature-icon">🌐</div>
                 <h4>Vast Global Network</h4>
-                <p class="text-muted">Connect with a vast network of nearly 100,000 highly dedicated student and professional peers worldwide.</p>
+                <p class="text-muted">Connect with a vast network of nearly 100,000 highly dedicated student and
+                    professional peers worldwide.</p>
             </div>
-            
+
             <div class="glass-card feature-card">
                 <div class="feature-icon">💼</div>
                 <h4>ACM's Career & Job Center</h4>
-                <p class="text-muted">Find targeted job opportunities and career resources to accelerate your professional growth.</p>
+                <p class="text-muted">Find targeted job opportunities and career resources to accelerate your
+                    professional growth.</p>
             </div>
-            
+
             <div class="glass-card feature-card">
                 <div class="feature-icon">👥</div>
                 <h4>Special Interest Groups (SIGs)</h4>
-                <p class="text-muted">Join one or more of ACM's Special Interest Groups in 37 specialty areas of IT and computing.</p>
+                <p class="text-muted">Join one or more of ACM's Special Interest Groups in 37 specialty areas of IT and
+                    computing.</p>
             </div>
-            
+
             <div class="glass-card feature-card">
                 <div class="feature-icon">🏢</div>
                 <h4>Professional & Student Chapters</h4>
-                <p class="text-muted">Become a member of the computing community through one of hundreds of chapters worldwide.</p>
+                <p class="text-muted">Become a member of the computing community through one of hundreds of chapters
+                    worldwide.</p>
             </div>
-            
+
             <div class="glass-card feature-card">
                 <div class="feature-icon">🤝</div>
                 <h4>Volunteering Opportunities</h4>
-                <p class="text-muted">Gain hands-on experience and marketplace knowledge through unique volunteering opportunities.</p>
+                <p class="text-muted">Gain hands-on experience and marketplace knowledge through unique volunteering
+                    opportunities.</p>
             </div>
         </div>
     </div>
@@ -208,30 +245,34 @@
         <div class="page-header text-center" style="margin-bottom: 3rem;">
             <h3>Learning & Development Resources</h3>
         </div>
-        
+
         <div class="features-grid">
             <div class="glass-card feature-card">
                 <div class="feature-icon">📚</div>
                 <h4>ACM Skills Bundle Add-On</h4>
-                <p class="text-muted">Optional unlimited access to thousands of online books, video courses, interactive sandboxes, practice labs, and AI-enabled tools.</p>
+                <p class="text-muted">Optional unlimited access to thousands of online books, video courses, interactive
+                    sandboxes, practice labs, and AI-enabled tools.</p>
             </div>
-            
+
             <div class="glass-card feature-card">
                 <div class="feature-icon">📖</div>
                 <h4>ACM Digital Library Premium</h4>
-                <p class="text-muted">Optional unlimited access with full-text articles from all ACM publications, AI-enhanced features, and research analytics.</p>
+                <p class="text-muted">Optional unlimited access with full-text articles from all ACM publications,
+                    AI-enhanced features, and research analytics.</p>
             </div>
-            
+
             <div class="glass-card feature-card">
                 <div class="feature-icon">🎓</div>
                 <h4>Communications of the ACM</h4>
-                <p class="text-muted">Receive a full year (12 issues) subscription to Communications of the ACM in both print and online formats.</p>
+                <p class="text-muted">Receive a full year (12 issues) subscription to Communications of the ACM in both
+                    print and online formats.</p>
             </div>
-            
+
             <div class="glass-card feature-card">
                 <div class="feature-icon">📰</div>
                 <h4>Publications & Newsletters</h4>
-                <p class="text-muted">Access to XRDS (Student Magazine), MemberNet, Student Quick Takes, TechNews, CareerNews, ACM Queue, and Ubiquity.</p>
+                <p class="text-muted">Access to XRDS (Student Magazine), MemberNet, Student Quick Takes, TechNews,
+                    CareerNews, ACM Queue, and Ubiquity.</p>
             </div>
         </div>
     </div>
@@ -242,42 +283,48 @@
         <div class="page-header text-center" style="margin-bottom: 3rem;">
             <h3>Exclusive Member Benefits</h3>
         </div>
-        
+
         <div class="features-grid">
             <div class="glass-card feature-card">
                 <div class="feature-icon">💰</div>
                 <h4>Subscription Discounts</h4>
-                <p class="text-muted">Enjoy exclusive discounts on subscriptions to ACM journals, magazines, books, and conferences.</p>
+                <p class="text-muted">Enjoy exclusive discounts on subscriptions to ACM journals, magazines, books, and
+                    conferences.</p>
             </div>
-            
+
             <div class="glass-card feature-card">
                 <div class="feature-icon">✉️</div>
                 <h4>Professional Email</h4>
-                <p class="text-muted">Get a free email forwarding address with high-quality spam filtering to maintain your professional identity.</p>
+                <p class="text-muted">Get a free email forwarding address with high-quality spam filtering to maintain
+                    your professional identity.</p>
             </div>
-            
+
             <div class="glass-card feature-card">
                 <div class="feature-icon">🎁</div>
                 <h4>Special Discounts</h4>
-                <p class="text-muted">Access valuable products and services through ACM's Insurance and Discounts Programs with special pricing.</p>
+                <p class="text-muted">Access valuable products and services through ACM's Insurance and Discounts
+                    Programs with special pricing.</p>
             </div>
-            
+
             <div class="glass-card feature-card">
                 <div class="feature-icon">🎤</div>
                 <h4>Distinguished Speakers</h4>
-                <p class="text-muted">Participate in ACM's Distinguished Speakers Program to hear from industry leaders and innovators.</p>
+                <p class="text-muted">Participate in ACM's Distinguished Speakers Program to hear from industry leaders
+                    and innovators.</p>
             </div>
-            
+
             <div class="glass-card feature-card">
                 <div class="feature-icon">📢</div>
                 <h4>Open Access Publishing</h4>
-                <p class="text-muted">Member pricing for Article Processing Charges (APCs) to publish accepted peer-reviewed articles.</p>
+                <p class="text-muted">Member pricing for Article Processing Charges (APCs) to publish accepted
+                    peer-reviewed articles.</p>
             </div>
-            
+
             <div class="glass-card feature-card">
                 <div class="feature-icon">🗳️</div>
                 <h4>Voting Rights</h4>
-                <p class="text-muted">Professional members have the right to vote for ACM Officers and shape the organization's future.</p>
+                <p class="text-muted">Professional members have the right to vote for ACM Officers and shape the
+                    organization's future.</p>
             </div>
         </div>
     </div>
@@ -289,7 +336,7 @@
             <h3>Membership Benefits Comparison</h3>
             <p class="page-subtitle">See what's included for Professional and Student Members</p>
         </div>
-        
+
         <div class="table-container glass-card" style="padding: 0;">
             <table class="benefits-table">
                 <thead>
@@ -371,11 +418,13 @@
         <div class="glass-card" style="border: 2px solid var(--border-glow); padding: 3rem 2rem; text-align: center;">
             <h3 style="margin-bottom: 1rem;">Ready to Join ACM?</h3>
             <p class="text-muted" style="margin-bottom: 2rem; line-height: 1.6;">
-                Start your journey with ACM VIT Chennai today and unlock exclusive benefits, opportunities, and connections with a global community.
+                Start your journey with ACM VIT Chennai today and unlock exclusive benefits, opportunities, and
+                connections with a global community.
             </p>
             <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
                 <button onclick="openJoinModal()" class="btn btn-primary">Join Now</button>
-                <a href="https://www.acm.org/membership/membership-benefits" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Learn More</a>
+                <a href="https://www.acm.org/membership/membership-benefits" target="_blank" rel="noopener noreferrer"
+                    class="btn btn-secondary">Learn More</a>
             </div>
         </div>
     </div>
@@ -385,77 +434,82 @@
     <div class="container" style="max-width: 800px;">
         <div class="glass-card" style="border-left: 4px solid var(--acm-blue); padding: 1.5rem;">
             <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
-                <strong style="color: var(--text-primary);">Please Note:</strong> ACM reserves the right to change or substitute the benefits, products or services included with membership. 
-                For the most current details, visit 
-                <a href="https://www.acm.org/membership/membership-benefits" target="_blank" rel="noopener noreferrer" style="color: var(--acm-blue); text-decoration: none; font-weight: 600;">ACM's official benefits page →</a>.
+                <strong style="color: var(--text-primary);">Please Note:</strong> ACM reserves the right to change or
+                substitute the benefits, products or services included with membership.
+                For the most current details, visit
+                <a href="https://www.acm.org/membership/membership-benefits" target="_blank" rel="noopener noreferrer"
+                    style="color: var(--acm-blue); text-decoration: none; font-weight: 600;">ACM's official benefits
+                    page →</a>.
             </p>
         </div>
     </div>
 </section>
 
 <script>
-// JS remains mostly the same, just ensuring modal works smoothly
-function openJoinModal() {
-    document.getElementById('joinModal').style.display = 'flex';
-    document.getElementById('joinForm').reset();
-    document.getElementById('formMessage').style.display = 'none';
-}
-
-function closeJoinModal() {
-    document.getElementById('joinModal').style.display = 'none';
-    document.getElementById('formMessage').style.display = 'none';
-}
-
-function submitJoinForm(event) {
-    event.preventDefault();
-    
-    const name = document.getElementById('memberName').value;
-    const email = document.getElementById('memberEmail').value;
-    const messageDiv = document.getElementById('formMessage');
-    
-    // Simulate loading state if needed
-    
-    fetch('{{ url_for("main.join_membership") }}', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            name: name,
-            email: email
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        messageDiv.style.display = 'block';
-        if (data.success) {
-            messageDiv.style.background = 'rgba(0, 215, 126, 0.1)';
-            messageDiv.style.color = 'var(--success)';
-            messageDiv.textContent = data.message;
-            document.getElementById('joinForm').reset();
-            setTimeout(() => {
-                closeJoinModal();
-            }, 2000);
-        } else {
-            messageDiv.style.background = 'rgba(230, 55, 87, 0.1)';
-            messageDiv.style.color = 'var(--error)';
-            messageDiv.textContent = data.message;
-        }
-    })
-    .catch(error => {
-        messageDiv.style.display = 'block';
-        messageDiv.style.background = 'rgba(230, 55, 87, 0.1)';
-        messageDiv.style.color = 'var(--error)';
-        messageDiv.textContent = 'An error occurred. Please try again.';
-    });
-}
-
-// Close modal when clicking outside
-document.getElementById('joinModal').addEventListener('click', function(event) {
-    if (event.target === this) {
-        closeJoinModal();
+    // JS remains mostly the same, just ensuring modal works smoothly
+    function openJoinModal() {
+        document.getElementById('joinModal').style.display = 'flex';
+        document.getElementById('joinForm').reset();
+        document.getElementById('formMessage').style.display = 'none';
     }
-});
+
+    function closeJoinModal() {
+        document.getElementById('joinModal').style.display = 'none';
+        document.getElementById('formMessage').style.display = 'none';
+    }
+
+    function submitJoinForm(event) {
+        event.preventDefault();
+
+        const firstName = document.getElementById('memberFirstName').value;
+        const lastName = document.getElementById('memberLastName').value;
+        const email = document.getElementById('memberEmail').value;
+        const messageDiv = document.getElementById('formMessage');
+
+        // Simulate loading state if needed
+
+        fetch('{{ url_for("main.join_membership") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                first_name: firstName,
+                last_name: lastName,
+                email: email
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                messageDiv.style.display = 'block';
+                if (data.success) {
+                    messageDiv.style.background = 'rgba(0, 215, 126, 0.1)';
+                    messageDiv.style.color = 'var(--success)';
+                    messageDiv.textContent = data.message;
+                    document.getElementById('joinForm').reset();
+                    setTimeout(() => {
+                        closeJoinModal();
+                    }, 2000);
+                } else {
+                    messageDiv.style.background = 'rgba(230, 55, 87, 0.1)';
+                    messageDiv.style.color = 'var(--error)';
+                    messageDiv.textContent = data.message;
+                }
+            })
+            .catch(error => {
+                messageDiv.style.display = 'block';
+                messageDiv.style.background = 'rgba(230, 55, 87, 0.1)';
+                messageDiv.style.color = 'var(--error)';
+                messageDiv.textContent = 'An error occurred. Please try again.';
+            });
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('joinModal').addEventListener('click', function (event) {
+        if (event.target === this) {
+            closeJoinModal();
+        }
+    });
 </script>
 
 {% endblock %}

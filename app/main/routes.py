@@ -1,6 +1,7 @@
 from flask import render_template, request, jsonify
 from . import bp
 from ..models import Department, Membership, db
+from .. import csrf
 
 
 @bp.route('/')
@@ -30,16 +31,18 @@ def membership():
     return render_template('main/membership.html')
 
 
+@csrf.exempt
 @bp.route('/api/membership/join', methods=['POST'])
 def join_membership():
     """Handle membership signup"""
     data = request.get_json()
     email = data.get('email', '').strip()
-    name = data.get('name', '').strip()
+    first_name = data.get('first_name', '').strip()
+    last_name = data.get('last_name', '').strip()
     
     # Validate input
-    if not email or not name:
-        return jsonify({'success': False, 'message': 'Email and name are required'}), 400
+    if not email or not first_name or not last_name:
+        return jsonify({'success': False, 'message': 'Email, first name, and last name are required'}), 400
     
     # Check if email already exists
     existing = Membership.query.filter_by(email=email).first()
@@ -48,7 +51,7 @@ def join_membership():
     
     try:
         # Create new membership record
-        new_membership = Membership(email=email, name=name)
+        new_membership = Membership(email=email, first_name=first_name, last_name=last_name)
         db.session.add(new_membership)
         db.session.commit()
         

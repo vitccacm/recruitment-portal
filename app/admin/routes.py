@@ -7,7 +7,7 @@ from functools import wraps
 from werkzeug.utils import secure_filename
 from . import bp
 from .forms import LoginForm, DepartmentCreateForm, DepartmentEditForm, AccountForm, RoundForm
-from ..models import db, Admin, Department, Application, Student, Round, RoundDepartment, RoundCandidate, SiteSettings, ProfileField, DepartmentQuestion
+from ..models import db, Admin, Department, Application, Student, Round, RoundDepartment, RoundCandidate, SiteSettings, ProfileField, DepartmentQuestion, Membership
 
 
 def admin_required(f):
@@ -773,3 +773,116 @@ def round_candidates(round_id, dept_id):
                          state=rd,
                          eligible_apps=eligible_apps, 
                          candidates=candidates_dict)
+
+
+# ============ MEMBERSHIPS MANAGEMENT ============
+
+@bp.route('/memberships')
+@login_required
+@super_admin_required
+def memberships():
+    """View all membership signups"""
+    status_filter = request.args.get('status', 'all')
+    
+    query = Membership.query
+    
+    if status_filter == 'pending':
+        query = query.filter_by(is_archived=False)
+    elif status_filter == 'archived':
+        query = query.filter_by(is_archived=True)
+    
+    memberships = query.order_by(Membership.created_at.desc()).all()
+    
+    # Get counts for tabs
+    counts = {
+        'all': Membership.query.count(),
+        'pending': Membership.query.filter_by(is_archived=False).count(),
+        'archived': Membership.query.filter_by(is_archived=True).count()
+    }
+    
+    return render_template('admin/memberships.html', 
+                         memberships=memberships,
+                         current_status=status_filter,
+                         counts=counts)
+
+
+@bp.route('/memberships/archive', methods=['POST'])
+@login_required
+@super_admin_required
+def archive_memberships():
+    """Bulk archive selected memberships"""
+    membership_ids = request.form.getlist('membership_ids')
+    
+    if not membership_ids:
+        flash('No memberships selected.', 'error')
+        return redirect(url_for('admin.memberships'))
+    
+    count = 0
+    for mid in membership_ids:
+        membership = Membership.query.get(int(mid))
+        if membership and not membership.is_archived:
+            membership.is_archived = True
+            count += 1
+    
+    db.session.commit()
+    flash(f'{count} membership(s) archived successfully.', 'success')
+    return redirect(url_for('admin.memberships'))
+
+
+@bp.route('/memberships/unarchive', methods=['POST'])
+@login_required
+@super_admin_required
+def unarchive_memberships():
+    """Bulk unarchive selected memberships"""
+    membership_ids = request.form.getlist('membership_ids')
+    
+    if not membership_ids:
+        flash('No memberships selected.', 'error')
+        return redirect(url_for('admin.memberships', status='archived'))
+    
+    count = 0
+    for mid in membership_ids:
+        membership = Membership.query.get(int(mid))
+        if membership and membership.is_archived:
+            membership.is_archived = False
+            count += 1
+    
+    db.session.commit()
+    flash(f'{count} membership(s) restored successfully.', 'success')
+    return redirect(url_for('admin.memberships'))
+
+
+@bp.route('/memberships/<int:membership_id>/delete', methods=['POST'])
+@login_required
+@super_admin_required
+def delete_membership(membership_id):
+    """Delete a membership signup"""
+    membership = Membership.query.get_or_404(membership_id)
+    db.session.delete(membership)
+    db.session.commit()
+    flash('Membership deleted.', 'success')
+    return redirect(url_for('admin.memberships'))
+
+
+@bp.route('/memberships/<int:membership_id>/approve', methods=['POST'])
+@login_required
+@super_admin_required
+def archive_single_membership(membership_id):
+    """Approve a single membership (mark as archived)"""
+    membership = Membership.query.get_or_404(membership_id)
+    membership.is_archived = True
+    db.session.commit()
+    flash(f'{membership.full_name} approved successfully.', 'success')
+    return redirect(url_for('admin.memberships'))
+
+
+@bp.route('/memberships/<int:membership_id>/pending', methods=['POST'])
+@login_required
+@super_admin_required
+def unarchive_single_membership(membership_id):
+    """Move a single membership back to pending"""
+    membership = Membership.query.get_or_404(membership_id)
+    membership.is_archived = False
+    db.session.commit()
+    flash(f'{membership.full_name} moved to pending.', 'success')
+    return redirect(url_for('admin.memberships'))

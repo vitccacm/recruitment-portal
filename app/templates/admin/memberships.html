@@ -1,0 +1,221 @@
+{% extends "admin/base.html" %}
+{% block title %}Memberships{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Membership Signups</h1>
+    <p class="text-muted">Manage ACM membership applications</p>
+</div>
+
+<!-- Filter Tabs -->
+<div class="tabs" style="margin-bottom: 1.5rem;">
+    <a href="{{ url_for('admin.memberships', status='pending') }}"
+        class="tab {% if current_status == 'pending' %}active{% endif %}">
+        Pending ({{ counts.pending }})
+    </a>
+    <a href="{{ url_for('admin.memberships', status='archived') }}"
+        class="tab {% if current_status == 'archived' %}active{% endif %}">
+        Approved ({{ counts.archived }})
+    </a>
+    <a href="{{ url_for('admin.memberships', status='all') }}"
+        class="tab {% if current_status == 'all' %}active{% endif %}">
+        All ({{ counts.all }})
+    </a>
+</div>
+
+{% if memberships %}
+<form id="bulkForm" method="POST">
+    <!-- Bulk Actions -->
+    <div class="bulk-actions glass-card"
+        style="margin-bottom: 1rem; padding: 1rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+            <input type="checkbox" id="selectAll" onclick="toggleSelectAll()">
+            <span>Select All</span>
+        </label>
+
+        <span id="selectedCount" style="color: var(--text-muted);">0 selected</span>
+
+        <div style="margin-left: auto; display: flex; gap: 0.5rem;">
+            {% if current_status != 'archived' %}
+            <button type="submit" formaction="{{ url_for('admin.archive_memberships') }}" class="btn btn-primary btn-sm"
+                id="archiveBtn" disabled>
+                Approve Selected
+            </button>
+            {% endif %}
+            {% if current_status == 'archived' %}
+            <button type="submit" formaction="{{ url_for('admin.unarchive_memberships') }}"
+                class="btn btn-secondary btn-sm" id="unarchiveBtn" disabled>
+                Move to Pending
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Memberships Table -->
+    <div class="glass-card" style="padding: 0; overflow-x: auto;">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px;"></th>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Email</th>
+                    <th>Signed Up</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for m in memberships %}
+                <tr class="{% if m.is_archived %}archived-row{% endif %}">
+                    <td>
+                        <input type="checkbox" name="membership_ids" value="{{ m.id }}" class="row-checkbox"
+                            onchange="updateSelectedCount()">
+                    </td>
+                    <td>{{ m.first_name }}</td>
+                    <td>{{ m.last_name }}</td>
+                    <td>
+                        <a href="mailto:{{ m.email }}" style="color: var(--acm-blue);">{{ m.email }}</a>
+                    </td>
+                    <td>{{ m.created_at.strftime('%b %d, %Y') }}</td>
+                    <td>
+                        {% if m.is_archived %}
+                        <span class="badge badge-open">Approved</span>
+                        {% else %}
+                        <span class="badge badge-upcoming">Pending</span>
+                        {% endif %}
+                    </td>
+                    <td style="display: flex; gap: 0.5rem;">
+                        {% if not m.is_archived %}
+                        <form action="{{ url_for('admin.archive_single_membership', membership_id=m.id) }}"
+                            method="POST" style="display: inline;">
+                            <button type="submit" class="btn btn-sm"
+                                style="color: var(--success); background: transparent; padding: 0.25rem 0.5rem;">
+                                Approve
+                            </button>
+                        </form>
+                        {% else %}
+                        <form action="{{ url_for('admin.unarchive_single_membership', membership_id=m.id) }}"
+                            method="POST" style="display: inline;">
+                            <button type="submit" class="btn btn-sm"
+                                style="color: var(--warning); background: transparent; padding: 0.25rem 0.5rem;">
+                                Pending
+                            </button>
+                        </form>
+                        {% endif %}
+                        <form action="{{ url_for('admin.delete_membership', membership_id=m.id) }}" method="POST"
+                            style="display: inline;"
+                            onsubmit="return confirm('Are you sure you want to delete this membership?');">
+                            <button type="submit" class="btn btn-sm"
+                                style="color: var(--error); background: transparent; padding: 0.25rem 0.5rem;">
+                                Delete
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</form>
+{% else %}
+<div class="glass-card text-center" style="padding: 3rem;">
+    <p class="text-muted">No membership signups found.</p>
+</div>
+{% endif %}
+
+<style>
+    .tabs {
+        display: flex;
+        gap: 0.5rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0;
+    }
+
+    .tab {
+        padding: 0.75rem 1.25rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
+        transition: all 0.2s ease;
+    }
+
+    .tab:hover {
+        color: var(--text-primary);
+    }
+
+    .tab.active {
+        color: var(--acm-blue);
+        border-bottom-color: var(--acm-blue);
+    }
+
+    .archived-row {
+        opacity: 0.6;
+    }
+
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .admin-table th {
+        text-align: left;
+        padding: 1rem;
+        background: rgba(0, 0, 0, 0.2);
+        font-weight: 600;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .admin-table td {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .admin-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .admin-table tr:hover td {
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    .btn-sm {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.875rem;
+    }
+</style>
+
+<script>
+    function toggleSelectAll() {
+        const selectAll = document.getElementById('selectAll');
+        const checkboxes = document.querySelectorAll('.row-checkbox');
+
+        checkboxes.forEach(cb => {
+            cb.checked = selectAll.checked;
+        });
+
+        updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+        const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+        const count = checkboxes.length;
+        document.getElementById('selectedCount').textContent = count + ' selected';
+
+        const archiveBtn = document.getElementById('archiveBtn');
+        const unarchiveBtn = document.getElementById('unarchiveBtn');
+
+        if (archiveBtn) archiveBtn.disabled = count === 0;
+        if (unarchiveBtn) unarchiveBtn.disabled = count === 0;
+
+        // Update select all checkbox state
+        const allCheckboxes = document.querySelectorAll('.row-checkbox');
+        const selectAll = document.getElementById('selectAll');
+        if (allCheckboxes.length > 0) {
+            selectAll.checked = count === allCheckboxes.length;
+            selectAll.indeterminate = count > 0 && count < allCheckboxes.length;
+        }
+    }
+</script>
+{% endblock %}

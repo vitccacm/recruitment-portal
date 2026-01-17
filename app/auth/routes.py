@@ -91,16 +91,21 @@ def get_auth_settings():
 
 
 def is_email_domain_allowed(email):
-    """Check if email domain is allowed"""
+    """Check if email domain is allowed (restricted to vitstudent.ac.in)"""
+    # Hardcoded restriction to VIT student emails
+    email_domain = email.lower().split('@')[-1]
+    if email_domain != 'vitstudent.ac.in':
+        return False
+    
+    # Also check site settings for additional restrictions
     allowed_domains = SiteSettings.get('allowed_domains', '')
     if not allowed_domains or not allowed_domains.strip():
-        return True  # No restriction if empty
+        return True  # No additional restriction if empty
     
     domains = [d.strip().lower() for d in allowed_domains.split(',') if d.strip()]
     if not domains:
         return True
     
-    email_domain = email.lower().split('@')[-1]
     return email_domain in domains
 
 
@@ -122,16 +127,15 @@ def google_login():
         uid = decoded_token['uid']
         email = decoded_token.get('email')
         name = decoded_token.get('name')
-        picture = decoded_token.get('picture')
         
         if not email:
             return jsonify({'success': False, 'message': 'Email not provided by Google'}), 400
         
-        # Check email domain restrictions
+        # Check email domain restrictions (must be @vitstudent.ac.in)
         if not is_email_domain_allowed(email):
             return jsonify({
                 'success': False,
-                'message': 'Registration is only allowed for specific email domains'
+                'message': 'Sign-up is only allowed for VIT student emails (@vitstudent.ac.in)'
             }), 403
         
         # Check if student exists
@@ -143,8 +147,6 @@ def google_login():
             if student:
                 # Link Google account
                 student.google_id = uid
-                if picture:
-                    student.profile_picture = picture
             else:
                 # Check if signups allowed
                 auth_settings = get_auth_settings()
@@ -154,19 +156,16 @@ def google_login():
                         'message': 'New registrations are currently disabled'
                     }), 403
                 
-                # Create new student
+                # Create new student (no profile picture - just name and email)
                 student = Student(
                     google_id=uid,
                     email=email,
                     name=name,
-                    profile_picture=picture,
                     is_verified=True
                 )
                 db.session.add(student)
         else:
-            # Update profile if changed
-            if picture and student.profile_picture != picture:
-                student.profile_picture = picture
+            # Update name if changed (no profile picture updates)
             if name and student.name != name:
                 student.name = name
         
@@ -227,9 +226,9 @@ def register():
     form = RegisterForm()
     
     if form.validate_on_submit():
-        # Check email domain
+        # Check email domain (must be @vitstudent.ac.in)
         if not is_email_domain_allowed(form.email.data):
-            flash('Registration is only allowed for specific email domains.', 'error')
+            flash('Sign-up is only allowed for VIT student emails (@vitstudent.ac.in).', 'error')
             return render_template('auth/register.html', form=form, auth_settings=auth_settings)
         
         # Check if email exists

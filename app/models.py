@@ -305,8 +305,14 @@ class Membership(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    name = db.Column(db.String(100), nullable=False)
+    first_name = db.Column(db.String(50), nullable=False)
+    last_name = db.Column(db.String(50), nullable=False)
+    is_archived = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
+    @property
+    def full_name(self):
+        return f"{self.first_name} {self.last_name}"
+    
     def __repr__(self):
-        return f'<Membership {self.name} ({self.email})>'
+        return f'<Membership {self.full_name} ({self.email})>'

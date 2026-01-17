@@ -4,14 +4,14 @@
 {% block content %}
 <div class="page-header">
     <h1 class="page-title">Site <span class="gradient-text">Settings</span></h1>
-    <p class="page-subtitle">Configure authentication and registration options</p>
+    <p class="page-subtitle">Configure registration options</p>
 </div>
 
 <form method="POST" action="{{ url_for('admin.settings') }}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     <div class="glass-card" style="max-width: 600px;">
-        <h3 class="mb-lg">Authentication Settings</h3>
+        <h3 class="mb-lg">Registration Settings</h3>
 
         <div class="form-group">
             <label class="switch">
@@ -20,43 +20,13 @@
             </label>
             <span style="margin-left: 1rem;"><strong>Allow New Signups</strong></span>
             <p class="text-muted mt-sm" style="font-size: 0.8rem; margin-left: 3.5rem;">
-                When disabled, only existing accounts can sign in
+                When disabled, only existing accounts can sign in. New students cannot register.
             </p>
         </div>
 
-        <div class="form-group">
-            <label class="switch">
-                <input type="checkbox" name="allow_google" {% if settings.allow_google %}checked{% endif %}>
-                <span class="switch-slider"></span>
-            </label>
-            <span style="margin-left: 1rem;"><strong>Allow Google Sign-In</strong></span>
-            <p class="text-muted mt-sm" style="font-size: 0.8rem; margin-left: 3.5rem;">
-                Show Google sign-in button on login page
-            </p>
-        </div>
-
-        <div class="form-group">
-            <label class="switch">
-                <input type="checkbox" name="allow_email" {% if settings.allow_email %}checked{% endif %}>
-                <span class="switch-slider"></span>
-            </label>
-            <span style="margin-left: 1rem;"><strong>Allow Email/Password Login</strong></span>
-            <p class="text-muted mt-sm" style="font-size: 0.8rem; margin-left: 3.5rem;">
-                Show email/password form and registration option
-            </p>
-        </div>
-
-        <div class="form-group mt-lg">
-            <label class="form-label"><strong>Allowed Email Domains</strong></label>
-            <input type="text" name="allowed_domains" class="form-control" value="{{ settings.allowed_domains }}"
-                placeholder="e.g., example.edu, university.ac.in">
-            <p class="text-muted mt-sm" style="font-size: 0.8rem;">
-                Comma-separated list of allowed domains. Leave empty to allow all domains.
-            </p>
-        </div>
-
-        <div class="alert alert-warning mt-lg" style="position: static;">
-            <strong>Warning:</strong> Disabling both Google and Email login will prevent students from signing in.
+        <div class="alert alert-info mt-lg" style="position: static;">
+            <strong>Note:</strong> Sign-ups are restricted to <strong>@vitstudent.ac.in</strong> email addresses only.
+            Students must use their VIT student email when signing in with Google.
         </div>
 
         <button type="submit" class="btn btn-primary btn-lg mt-lg">Save Settings</button>
