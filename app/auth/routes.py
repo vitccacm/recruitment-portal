@@ -19,12 +19,15 @@ try:
     # Check if already initialized
     firebase_admin.get_app()
 except ValueError:
-    # Initialize with service account
+    # Get private key and fix newline escapes from .env
+    private_key = os.getenv('FIREBASE_PRIVATE_KEY', '').replace('\\n', '\n')
+    
+    # Initialize with service account from environment variables
     cred = credentials.Certificate({
         "type": "service_account",
-        "project_id": "acm-recruitment-4886d",
+        "project_id": os.getenv('FIREBASE_PROJECT_ID', 'acm-recruitment-4886d'),
         "private_key_id": os.getenv('FIREBASE_PRIVATE_KEY_ID'),
-        "private_key": os.getenv('FIREBASE_PRIVATE_KEY', '').replace('\\n', '\n'),
+        "private_key": private_key,
         "client_email": os.getenv('FIREBASE_CLIENT_EMAIL'),
         "client_id": os.getenv('FIREBASE_CLIENT_ID'),
         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
