@@ -1,13 +1,38 @@
-from flask import render_template, redirect, url_for, flash, request, session, current_app
+from flask import render_template, redirect, url_for, flash, request, session, current_app, jsonify
 from flask_login import login_user, logout_user, current_user
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField
 from wtforms.validators import DataRequired, Email, Length, EqualTo
 from authlib.integrations.flask_client import OAuth
+import firebase_admin
+from firebase_admin import credentials, auth as firebase_auth
 from . import bp
 from ..models import db, Student, SiteSettings
+from .. import csrf
+import os
+from functools import wraps
 
 oauth = OAuth()
+
+# Initialize Firebase Admin SDK
+try:
+    # Check if already initialized
+    firebase_admin.get_app()
+except ValueError:
+    # Initialize with service account
+    cred = credentials.Certificate({
+        "type": "service_account",
+        "project_id": "acm-recruitment-4886d",
+        "private_key_id": os.getenv('FIREBASE_PRIVATE_KEY_ID'),
+        "private_key": os.getenv('FIREBASE_PRIVATE_KEY', '').replace('\\n', '\n'),
+        "client_email": os.getenv('FIREBASE_CLIENT_EMAIL'),
+        "client_id": os.getenv('FIREBASE_CLIENT_ID'),
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+        "client_x509_cert_url": os.getenv('FIREBASE_CERT_URL')
+    })
+    firebase_admin.initialize_app(cred)
 
 
 def init_oauth(app):
@@ -68,6 +93,98 @@ def is_email_domain_allowed(email):
     
     email_domain = email.lower().split('@')[-1]
     return email_domain in domains
+
+
+@bp.route('/google-login', methods=['POST'])
+@csrf.exempt
+def google_login():
+    """Handle Firebase Google Sign-In"""
+    try:
+        print("DEBUG: google_login route called")
+        data = request.get_json()
+        print(f"DEBUG: Request data: {data}")
+        id_token = data.get('idToken') if data else None
+        
+        if not id_token:
+            return jsonify({'success': False, 'message': 'No token provided'}), 400
+        
+        # Verify the Firebase ID token
+        decoded_token = firebase_auth.verify_id_token(id_token)
+        uid = decoded_token['uid']
+        email = decoded_token.get('email')
+        name = decoded_token.get('name')
+        picture = decoded_token.get('picture')
+        
+        if not email:
+            return jsonify({'success': False, 'message': 'Email not provided by Google'}), 400
+        
+        # Check email domain restrictions
+        if not is_email_domain_allowed(email):
+            return jsonify({
+                'success': False,
+                'message': 'Registration is only allowed for specific email domains'
+            }), 403
+        
+        # Check if student exists
+        student = Student.query.filter_by(google_id=uid).first()
+        
+        if not student:
+            # Check by email (in case of account linking)
+            student = Student.query.filter_by(email=email).first()
+            if student:
+                # Link Google account
+                student.google_id = uid
+                if picture:
+                    student.profile_picture = picture
+            else:
+                # Check if signups allowed
+                auth_settings = get_auth_settings()
+                if not auth_settings['allow_signup']:
+                    return jsonify({
+                        'success': False,
+                        'message': 'New registrations are currently disabled'
+                    }), 403
+                
+                # Create new student
+                student = Student(
+                    google_id=uid,
+                    email=email,
+                    name=name,
+                    profile_picture=picture,
+                    is_verified=True
+                )
+                db.session.add(student)
+        else:
+            # Update profile if changed
+            if picture and student.profile_picture != picture:
+                student.profile_picture = picture
+            if name and student.name != name:
+                student.name = name
+        
+        db.session.commit()
+        
+        # Log the user in
+        login_user(student, remember=True)
+        
+        return jsonify({
+            'success': True,
+            'redirect_url': url_for('student.dashboard')
+        })
+        
+    except firebase_auth.InvalidIdTokenError as e:
+        print(f"DEBUG: InvalidIdTokenError: {str(e)}")
+        current_app.logger.error(f'InvalidIdTokenError: {str(e)}')
+        return jsonify({'success': False, 'message': 'Invalid authentication token'}), 401
+    except firebase_auth.ExpiredIdTokenError as e:
+        print(f"DEBUG: ExpiredIdTokenError: {str(e)}")
+        current_app.logger.error(f'ExpiredIdTokenError: {str(e)}')
+        return jsonify({'success': False, 'message': 'Authentication token expired'}), 401
+    except Exception as e:
+        print(f"DEBUG: Exception: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        current_app.logger.error(f'Firebase auth error: {str(e)}')
+        return jsonify({'success': False, 'message': f'Authentication failed: {str(e)}'}), 500
 
 
 @bp.route('/login')
@@ -156,89 +273,11 @@ def email_login():
     return redirect(url_for('auth.login'))
 
 
-@bp.route('/google')
-def google_login():
-    """Initiate Google OAuth"""
-    auth_settings = get_auth_settings()
-    
-    if not auth_settings['allow_google']:
-        flash('Google sign-in is disabled.', 'error')
-        return redirect(url_for('auth.login'))
-    
-    redirect_uri = url_for('auth.google_callback', _external=True)
-    return oauth.google.authorize_redirect(redirect_uri)
-
-
-@bp.route('/google/callback')
-def google_callback():
-    """Handle Google OAuth callback"""
-    try:
-        token = oauth.google.authorize_access_token()
-        user_info = token.get('userinfo')
-        
-        if not user_info:
-            flash('Failed to get user info from Google.', 'error')
-            return redirect(url_for('auth.login'))
-        
-        # Check if student exists by google_id or email
-        student = Student.query.filter_by(google_id=user_info['sub']).first()
-        
-        if not student:
-            # Check if email exists (could be an email-registered user)
-            student = Student.query.filter_by(email=user_info['email']).first()
-            if student:
-                # Link Google account to existing email account
-                student.google_id = user_info['sub']
-                if user_info.get('picture'):
-                    student.profile_picture = user_info.get('picture')
-                db.session.commit()
-            else:
-                # Check if signups are allowed
-                auth_settings = get_auth_settings()
-                if not auth_settings['allow_signup']:
-                    flash('New registrations are disabled.', 'error')
-                    return redirect(url_for('auth.login'))
-                
-                # Check email domain
-                if not is_email_domain_allowed(user_info['email']):
-                    flash('Registration is only allowed for specific email domains.', 'error')
-                    return redirect(url_for('auth.login'))
-                
-                # Create new student
-                student = Student(
-                    google_id=user_info['sub'],
-                    email=user_info['email'],
-                    name=user_info.get('name'),
-                    profile_picture=user_info.get('picture'),
-                    is_verified=True
-                )
-                db.session.add(student)
-                db.session.commit()
-                flash('Welcome to ACM Recruitment Portal!', 'success')
-        else:
-            # Update profile picture if changed
-            if user_info.get('picture') and student.profile_picture != user_info.get('picture'):
-                student.profile_picture = user_info.get('picture')
-                db.session.commit()
-        
-        login_user(student)
-        
-        # Check if profile is incomplete
-        if student.profile_completion < 75:
-            flash('Please complete your profile to apply for departments.', 'info')
-            return redirect(url_for('student.profile'))
-        
-        return redirect(url_for('student.dashboard'))
-        
-    except Exception as e:
-        current_app.logger.error(f'Google OAuth error: {e}')
-        flash('Authentication failed. Please try again.', 'error')
-        return redirect(url_for('auth.login'))
-
-
-@bp.route('/logout')
+@bp.route('/logout', methods=['GET', 'POST'])
 def logout():
     """Logout user"""
     logout_user()
+    if request.method == 'POST':
+        return jsonify({'success': True}), 200
     flash('You have been logged out.', 'info')
     return redirect(url_for('main.index'))

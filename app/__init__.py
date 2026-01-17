@@ -1,5 +1,5 @@
 import os
-from flask import Flask, make_response
+from flask import Flask, make_response, request
 from flask_login import LoginManager, current_user
 from flask_wtf.csrf import CSRFProtect
 from .config import Config
@@ -44,7 +44,7 @@ def create_app(config_class=Config):
     
     # Register blueprints
     from .auth import bp as auth_bp
-    app.register_blueprint(auth_bp)
+    app.register_blueprint(auth_bp, url_prefix='/auth')
     
     from .main import bp as main_bp
     app.register_blueprint(main_bp)

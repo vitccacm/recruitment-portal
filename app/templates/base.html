@@ -19,6 +19,7 @@
             <ul class="nav-links">
                 <li><a href="{{ url_for('main.index') }}">Home</a></li>
                 <li><a href="{{ url_for('main.departments') }}">Departments</a></li>
+                <li><a href="{{ url_for('main.membership') }}">Membership</a></li>
                 {% if current_user.is_authenticated and current_user.get_id().startswith('student_') %}
                 <li><a href="{{ url_for('student.dashboard') }}">Dashboard</a></li>
                 {% endif %}
