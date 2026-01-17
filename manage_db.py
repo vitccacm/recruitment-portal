@@ -26,6 +26,7 @@ def print_menu():
     print("  3. View Membership records")
     print("  4. Reset database (DANGEROUS - drops all tables)")
     print("  5. Change Super Admin credentials")
+    print("  6. Initialize database (first-time setup)")
     print("  0. Exit")
     print()
 
@@ -204,19 +205,56 @@ def reset_database(app):
         print("Reset cancelled.")
         return
     
+    # Get new admin credentials
+    print("\n--- Set New Super Admin Credentials ---")
+    
+    admin_username = input("Enter admin username (default: admin): ").strip()
+    if not admin_username:
+        admin_username = 'admin'
+    
+    admin_name = input("Enter admin display name (default: Super Admin): ").strip()
+    if not admin_name:
+        admin_name = 'Super Admin'
+    
+    while True:
+        admin_password = input("Enter admin password (min 6 chars): ").strip()
+        if len(admin_password) >= 6:
+            break
+        print("✗ Password must be at least 6 characters. Try again.")
+    
+    confirm_password = input("Confirm admin password: ").strip()
+    if admin_password != confirm_password:
+        print("✗ Passwords do not match. Reset cancelled.")
+        return
+    
+    print("\n--- Resetting Database ---")
+    
     with app.app_context():
+        # Drop all tables
+        print("Dropping all tables...")
         db.drop_all()
+        
+        # Create all tables
+        print("Creating all tables...")
         db.create_all()
         
-        # Recreate default admin
-        from app.models import Admin
-        if not Admin.query.filter_by(email='admin').first():
-            admin = Admin(email='admin', name='Super Admin', role='admin')
-            admin.set_password('admin123')
-            db.session.add(admin)
-            db.session.commit()
+        # Verify tables were created
+        from sqlalchemy import inspect
+        inspector = inspect(db.engine)
+        tables = inspector.get_table_names()
+        print(f"✓ Created {len(tables)} tables: {', '.join(tables)}")
         
-        print("✓ Database reset complete. Default admin recreated.")
+        # Create new super admin
+        from app.models import Admin
+        admin = Admin(email=admin_username, name=admin_name, role='admin')
+        admin.set_password(admin_password)
+        db.session.add(admin)
+        db.session.commit()
+        
+        print(f"\n✓ Database reset complete!")
+        print(f"✓ Super admin created:")
+        print(f"  Username: {admin_username}")
+        print(f"  Password: {'*' * len(admin_password)}")
 
 
 def change_super_admin_credentials(app):
@@ -270,6 +308,74 @@ def change_super_admin_credentials(app):
             print("Changes cancelled.")
 
 
+def initialize_database(app):
+    """Initialize database for first-time setup"""
+    print("\n--- Initialize Database ---")
+    
+    with app.app_context():
+        from sqlalchemy import inspect
+        inspector = inspect(db.engine)
+        existing_tables = inspector.get_table_names()
+        
+        if existing_tables:
+            print(f"⚠️  Database already has {len(existing_tables)} tables: {', '.join(existing_tables)}")
+            proceed = input("Tables already exist. Continue? This will NOT drop existing data. (y/n): ").strip().lower()
+            if proceed != 'y':
+                print("Initialization cancelled.")
+                return
+        
+        # Check if super admin exists
+        from app.models import Admin
+        try:
+            existing_admin = Admin.query.filter_by(role='admin').first()
+        except:
+            existing_admin = None
+        
+        # Create tables
+        print("\nCreating database tables...")
+        db.create_all()
+        
+        # Verify tables
+        tables = inspector.get_table_names()
+        print(f"✓ Database has {len(tables)} tables: {', '.join(tables)}")
+        
+        # Create super admin if none exists
+        if not existing_admin:
+            print("\n--- Set Super Admin Credentials ---")
+            
+            admin_username = input("Enter admin username (default: admin): ").strip()
+            if not admin_username:
+                admin_username = 'admin'
+            
+            admin_name = input("Enter admin display name (default: Super Admin): ").strip()
+            if not admin_name:
+                admin_name = 'Super Admin'
+            
+            while True:
+                admin_password = input("Enter admin password (min 6 chars): ").strip()
+                if len(admin_password) >= 6:
+                    break
+                print("✗ Password must be at least 6 characters. Try again.")
+            
+            confirm_password = input("Confirm admin password: ").strip()
+            if admin_password != confirm_password:
+                print("✗ Passwords do not match. Admin not created.")
+                print("You can create admin later using option 5 after manually adding one.")
+                return
+            
+            admin = Admin(email=admin_username, name=admin_name, role='admin')
+            admin.set_password(admin_password)
+            db.session.add(admin)
+            db.session.commit()
+            
+            print(f"\n✓ Database initialized successfully!")
+            print(f"✓ Super admin created:")
+            print(f"  Username: {admin_username}")
+            print(f"  Password: {'*' * len(admin_password)}")
+        else:
+            print(f"\n✓ Database initialized. Super admin already exists: {existing_admin.email}")
+
+
 def main():
     app = create_app()
     
@@ -279,7 +385,7 @@ def main():
         print_menu()
         
         try:
-            choice = input("Enter choice (0-5): ").strip()
+            choice = input("Enter choice (0-6): ").strip()
         except (KeyboardInterrupt, EOFError):
             print("\n\nExiting...")
             break
@@ -297,6 +403,8 @@ def main():
             reset_database(app)
         elif choice == '5':
             change_super_admin_credentials(app)
+        elif choice == '6':
+            initialize_database(app)
         else:
             print("Invalid choice. Please try again.")
 

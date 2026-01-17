@@ -58,16 +58,8 @@ def create_app(config_class=Config):
     from .dept import bp as dept_bp
     app.register_blueprint(dept_bp, url_prefix='/dept')
     
-    # Create database tables and seed admin
-    with app.app_context():
-        db.create_all()
-        
-        # Create default admin if not exists
-        if not Admin.query.filter_by(email='admin').first():
-            admin = Admin(email='admin', name='Super Admin', role='admin')
-            admin.set_password('admin123')
-            db.session.add(admin)
-            db.session.commit()
+    # Database tables and admin are created via manage_db.py script
+    # Run: python manage_db.py -> Option 6 (Initialize Database)
     
     # Custom error handlers
     @app.errorhandler(404)
