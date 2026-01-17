@@ -20,7 +20,8 @@ try:
     firebase_admin.get_app()
 except ValueError:
     # Try loading from JSON file first (recommended for cPanel)
-    firebase_creds_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'firebase-credentials.json')
+    # Go up 3 levels: auth -> app -> project root
+    firebase_creds_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'firebase-credentials.json')
     
     if os.path.exists(firebase_creds_path):
         # Load from JSON file (most reliable for cPanel)
