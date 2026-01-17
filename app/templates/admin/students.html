@@ -24,18 +24,24 @@
 </div>
 
 <!-- Filter Tabs -->
-<div class="tabs" style="margin-bottom: 1.5rem;">
+<div style="display: flex; gap: 0; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-color);">
     <a href="{{ url_for('admin.students', status='all') }}"
-        class="tab {% if current_status == 'all' %}active{% endif %}">
+        style="padding: 0.75rem 1.5rem; text-decoration: none; font-weight: 500; transition: all 0.2s;
+               {% if current_status == 'all' %}color: var(--acm-blue); border-bottom: 2px solid var(--acm-blue); margin-bottom: -2px;
+               {% else %}color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -2px;{% endif %}">
         All ({{ counts.total }})
     </a>
     <a href="{{ url_for('admin.students', status='complete') }}"
-        class="tab {% if current_status == 'complete' %}active{% endif %}">
-        Complete ({{ counts.complete }})
+        style="padding: 0.75rem 1.5rem; text-decoration: none; font-weight: 500; transition: all 0.2s;
+               {% if current_status == 'complete' %}color: var(--success); border-bottom: 2px solid var(--success); margin-bottom: -2px;
+               {% else %}color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -2px;{% endif %}">
+        ✓ Complete ({{ counts.complete }})
     </a>
     <a href="{{ url_for('admin.students', status='incomplete') }}"
-        class="tab {% if current_status == 'incomplete' %}active{% endif %}">
-        Incomplete ({{ counts.incomplete }})
+        style="padding: 0.75rem 1.5rem; text-decoration: none; font-weight: 500; transition: all 0.2s;
+               {% if current_status == 'incomplete' %}color: var(--warning); border-bottom: 2px solid var(--warning); margin-bottom: -2px;
+               {% else %}color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -2px;{% endif %}">
+        ⏳ Incomplete ({{ counts.incomplete }})
     </a>
 </div>
 
