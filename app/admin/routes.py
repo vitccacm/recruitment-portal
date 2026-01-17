@@ -355,6 +355,35 @@ def delete_account(admin_id):
     return redirect(url_for('admin.accounts'))
 
 
+@bp.route('/accounts/<int:admin_id>/reset-password', methods=['POST'])
+@login_required
+@super_admin_required
+def reset_account_password(admin_id):
+    """Reset password for an admin account"""
+    admin = Admin.query.get_or_404(admin_id)
+    
+    # Prevent resetting default admin password via this route
+    if admin.email == 'admin' and admin.id == 1:
+        flash('Cannot reset default admin password. Use manage_db.py instead.', 'error')
+        return redirect(url_for('admin.accounts'))
+    
+    new_password = request.form.get('new_password', '').strip()
+    confirm_password = request.form.get('confirm_password', '').strip()
+    
+    if not new_password or len(new_password) < 6:
+        flash('Password must be at least 6 characters.', 'error')
+        return redirect(url_for('admin.accounts'))
+    
+    if new_password != confirm_password:
+        flash('Passwords do not match.', 'error')
+        return redirect(url_for('admin.accounts'))
+    
+    admin.set_password(new_password)
+    db.session.commit()
+    flash(f'Password reset for "{admin.email}".', 'success')
+    return redirect(url_for('admin.accounts'))
+
+
 # ============ ROUNDS MANAGEMENT ============
 
 @bp.route('/rounds')

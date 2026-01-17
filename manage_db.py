@@ -25,6 +25,7 @@ def print_menu():
     print("  2. View all tables")
     print("  3. View Membership records")
     print("  4. Reset database (DANGEROUS - drops all tables)")
+    print("  5. Change Super Admin credentials")
     print("  0. Exit")
     print()
 
@@ -218,6 +219,57 @@ def reset_database(app):
         print("✓ Database reset complete. Default admin recreated.")
 
 
+def change_super_admin_credentials(app):
+    """Change super admin username and password"""
+    print("\n--- Change Super Admin Credentials ---")
+    
+    with app.app_context():
+        from app.models import Admin
+        
+        # Find the super admin (id=1 or role='admin')
+        super_admin = Admin.query.filter_by(role='admin').first()
+        
+        if not super_admin:
+            print("✗ No super admin found in the database.")
+            return
+        
+        print(f"Current super admin: {super_admin.email}")
+        print()
+        
+        # Get new username
+        new_username = input("Enter new username (or press Enter to keep current): ").strip()
+        if new_username:
+            # Check if username already exists
+            existing = Admin.query.filter_by(email=new_username).first()
+            if existing and existing.id != super_admin.id:
+                print("✗ That username is already taken.")
+                return
+            super_admin.email = new_username
+            print(f"✓ Username will be changed to: {new_username}")
+        
+        # Get new password
+        new_password = input("Enter new password (or press Enter to keep current): ").strip()
+        if new_password:
+            if len(new_password) < 6:
+                print("✗ Password must be at least 6 characters.")
+                return
+            super_admin.set_password(new_password)
+            print("✓ Password will be updated.")
+        
+        if not new_username and not new_password:
+            print("No changes made.")
+            return
+        
+        # Confirm changes
+        confirm = input("\nSave changes? (y/n): ").strip().lower()
+        if confirm == 'y':
+            db.session.commit()
+            print("\n✓ Super admin credentials updated successfully!")
+        else:
+            db.session.rollback()
+            print("Changes cancelled.")
+
+
 def main():
     app = create_app()
     
@@ -227,7 +279,7 @@ def main():
         print_menu()
         
         try:
-            choice = input("Enter choice (0-4): ").strip()
+            choice = input("Enter choice (0-5): ").strip()
         except (KeyboardInterrupt, EOFError):
             print("\n\nExiting...")
             break
@@ -243,6 +295,8 @@ def main():
             view_memberships(app)
         elif choice == '4':
             reset_database(app)
+        elif choice == '5':
+            change_super_admin_credentials(app)
         else:
             print("Invalid choice. Please try again.")
 
