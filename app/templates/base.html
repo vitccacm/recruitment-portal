@@ -1,21 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}ACM Recruitment Portal{% endblock %} | ACM VIT Chennai</title>
-    <meta name="description" content="Join ACM Student Chapter VIT Chennai - Apply for various departments and be part of our community.">
+    <meta name="description"
+        content="Join ACM Student Chapter VIT Chennai - Apply for various departments and be part of our community.">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     {% block head %}{% endblock %}
 </head>
+
 <body>
     <!-- Navigation -->
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <a href="{{ url_for('main.index') }}" class="nav-brand">
+                <img src="{{ url_for('static', filename='logo.webp') }}" alt="ACM Logo">
                 <span class="gradient-text">ACM</span> VIT Chennai
             </a>
-            
+
             <ul class="nav-links">
                 <li><a href="{{ url_for('main.index') }}">Home</a></li>
                 <li><a href="{{ url_for('main.departments') }}">Departments</a></li>
@@ -24,25 +29,25 @@
                 <li><a href="{{ url_for('student.dashboard') }}">Dashboard</a></li>
                 {% endif %}
             </ul>
-            
+
             <div class="nav-user">
                 {% if current_user.is_authenticated %}
-                    {% if current_user.get_id().startswith('student_') %}
-                        {% if current_user.profile_picture %}
-                        <img src="{{ current_user.profile_picture }}" alt="Profile">
-                        {% endif %}
-                        <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary btn-sm">Logout</a>
-                    {% else %}
-                        <span class="text-muted">Admin</span>
-                        <a href="{{ url_for('admin.logout') }}" class="btn btn-secondary btn-sm">Logout</a>
-                    {% endif %}
+                {% if current_user.get_id().startswith('student_') %}
+                {% if current_user.profile_picture %}
+                <img src="{{ current_user.profile_picture }}" alt="Profile">
+                {% endif %}
+                <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary btn-sm">Logout</a>
                 {% else %}
-                    <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Sign In</a>
+                <span class="text-muted">Admin</span>
+                <a href="{{ url_for('admin.logout') }}" class="btn btn-secondary btn-sm">Logout</a>
+                {% endif %}
+                {% else %}
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Sign In</a>
                 {% endif %}
             </div>
         </div>
     </nav>
-    
+
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
@@ -53,12 +58,12 @@
     </div>
     {% endif %}
     {% endwith %}
-    
+
     <!-- Main Content -->
     <main>
         {% block content %}{% endblock %}
     </main>
-    
+
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
@@ -66,7 +71,7 @@
             <p class="mt-sm">Built with ❤️ for the community</p>
         </div>
     </footer>
-    
+
     <script>
         // Navbar scroll effect
         window.addEventListener('scroll', () => {
@@ -77,7 +82,7 @@
                 navbar.classList.remove('scrolled');
             }
         });
-        
+
         // Auto-dismiss flash messages
         setTimeout(() => {
             const alerts = document.querySelectorAll('.alert');
@@ -88,7 +93,8 @@
             });
         }, 5000);
     </script>
-    
+
     {% block scripts %}{% endblock %}
 </body>
+
 </html>

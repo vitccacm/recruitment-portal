@@ -706,6 +706,62 @@ tr:hover td {
   flex-wrap: wrap;
 }
 
+/* Hero Capsule */
+.hero-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-lg);
+  background: rgba(0, 133, 202, 0.15);
+  border: 1px solid rgba(0, 133, 202, 0.3);
+  border-radius: var(--radius-full);
+  color: var(--acm-blue-light);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  margin-bottom: var(--space-xl);
+  transition: var(--transition-normal);
+}
+
+.hero-capsule:hover {
+  background: rgba(0, 133, 202, 0.25);
+  border-color: var(--acm-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 133, 202, 0.2);
+}
+
+.capsule-icon {
+  font-size: 1rem;
+}
+
+.capsule-arrow {
+  font-size: 0.8rem;
+  opacity: 0.7;
+  transition: var(--transition-fast);
+}
+
+.hero-capsule:hover .capsule-arrow {
+  opacity: 1;
+  transform: translateX(2px);
+}
+
+/* Membership Button */
+.btn-membership {
+  background: linear-gradient(135deg, #f6c343 0%, #e6a832 50%, #d4951a 100%);
+  color: #1a1a1a;
+  font-weight: 700;
+  box-shadow: var(--shadow-md), 0 0 20px rgba(246, 195, 67, 0.3);
+}
+
+.btn-membership:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg), 0 0 40px rgba(246, 195, 67, 0.4);
+}
+
+.btn-membership svg {
+  stroke-width: 2.5;
+}
+
 /* Stats Grid */
 .stats-grid {
   display: grid;
