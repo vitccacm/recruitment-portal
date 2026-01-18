@@ -1,7 +1,10 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+
+# IST timezone (UTC+5:30)
+IST = timezone(timedelta(hours=5, minutes=30))
 
 db = SQLAlchemy()
 
@@ -146,11 +149,13 @@ class Department(db.Model):
     
     @property
     def recruitment_status(self):
-        """Get current recruitment status - uses local server time for comparison"""
-        now = datetime.now()
-        if self.recruitment_start and now < self.recruitment_start:
+        """Get current recruitment status - uses IST timezone for comparison"""
+        # Get current time in IST
+        now_ist = datetime.now(IST).replace(tzinfo=None)  # Make naive for comparison
+        
+        if self.recruitment_start and now_ist < self.recruitment_start:
             return 'upcoming'
-        elif self.recruitment_end and now > self.recruitment_end:
+        elif self.recruitment_end and now_ist > self.recruitment_end:
             return 'ended'
         elif self.is_active:
             return 'open'
