@@ -5,17 +5,20 @@ from wtforms.validators import DataRequired, Length, Regexp
 
 BRANCH_CHOICES = [
     ('', 'Select Branch'),
-    ('CSE', 'Computer Science and Engineering'),
-    ('ECE', 'Electronics and Communication Engineering'),
-    ('EEE', 'Electrical and Electronics Engineering'),
-    ('MECH', 'Mechanical Engineering'),
-    ('CIVIL', 'Civil Engineering'),
-    ('IT', 'Information Technology'),
-    ('AIDS', 'AI and Data Science'),
-    ('AIML', 'AI and Machine Learning'),
-    ('CSE-CS', 'CSE - Cyber Security'),
-    ('CSE-IOT', 'CSE - Internet of Things'),
-    ('Other', 'Other')
+    ('CSE', 'B.Tech CSE CORE'),
+    ('CSE-AIML', 'B.Tech CSE AIML'),
+    ('CSE-AIR', 'B.Tech CSE AIRobotics'),
+    ('CSE-DS', 'B.Tech CSE Data Science'),
+    ('CSE-CS', 'B.Tech CSE CyberSec'),
+    ('MECH', 'B.Tech MECH'),
+    ('MECH-AUTO', 'B.Tech Mechatronics'),
+    ('CIVIL', 'B.Tech Civil'),
+    ('ECE', 'B.Tech Electronics and Communication'),
+    ('ECE-COMP', 'B.Tech Electronics and Computer'),
+    ('ECE-VLSI', 'B.Tech Electronics Engineering (VLSI Design and Technology)'),
+    ('FT', 'B.Tech Fashion Technology'),
+    ('EEE', 'B.Tech. Electrical and Electronics Engineering'),
+    ('ECS', 'B.Tech. Electrical and Computer Science Engineering'),
 ]
 
 BATCH_CHOICES = [
