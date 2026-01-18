@@ -107,6 +107,7 @@
         </p>
         <div style="display: flex; gap: 1rem;">
             <form id="deleteForm" method="POST" style="flex: 1;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn"
                     style="width: 100%; background: var(--error); border-color: var(--error);">
                     Yes, Delete
