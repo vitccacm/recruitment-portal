@@ -4,30 +4,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}ACM Recruitment Portal{% endblock %} | ACM VIT Chennai</title>
+    <title>{% block title %}Recruitment Portal{% endblock %} | VIT Chennai ACM Student Chapter</title>
     <meta name="description"
-        content="Join ACM Student Chapter VIT Chennai - Apply for various departments and be part of our community.">
+        content="Join VIT Chennai ACM Student Chapter - Apply for various departments and be part of our community.">
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     {% block head %}{% endblock %}
 </head>
 
 <body>
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobile-overlay"></div>
+
     <!-- Navigation -->
     <nav class="navbar" id="navbar">
         <div class="nav-container">
             <a href="{{ url_for('main.index') }}" class="nav-brand">
-                <img src="{{ url_for('static', filename='logo.webp') }}" alt="ACM Logo">
-                <span class="gradient-text">ACM</span> VIT Chennai
+                <img src="{{ url_for('static', filename='logo.webp') }}" alt="VIT Chennai ACM Logo">
+                <span class="gradient-text">VIT Chennai</span> ACM
             </a>
 
-            <ul class="nav-links">
+            <!-- Hamburger Menu Button -->
+            <button class="hamburger" id="hamburger" aria-label="Toggle navigation">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+
+            <ul class="nav-links" id="nav-links">
                 <li><a href="{{ url_for('main.index') }}">Home</a></li>
                 <li><a href="{{ url_for('main.departments') }}">Departments</a></li>
                 <li><a href="{{ url_for('main.membership') }}">Membership</a></li>
                 {% if current_user.is_authenticated and current_user.get_id().startswith('student_') %}
                 <li><a href="{{ url_for('student.dashboard') }}">Dashboard</a></li>
                 {% endif %}
+                <!-- Mobile-only auth buttons -->
+                <li class="mobile-auth">
+                    {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary"
+                        style="width: 100%; margin-top: var(--space-md);">Logout</a>
+                    {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-primary"
+                        style="width: 100%; margin-top: var(--space-md);">Sign In</a>
+                    {% endif %}
+                </li>
             </ul>
 
             <div class="nav-user">
@@ -66,8 +86,8 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2025 ACM Student Chapter VIT Chennai. All rights reserved.</p>
-            <p class="mt-sm">Built with ❤️ for the community</p>
+            <p>&copy; 2025 VIT Chennai ACM Student Chapter. All rights reserved.</p>
+            <p class="mt-sm">Built for the community</p>
         </div>
     </footer>
 
@@ -91,6 +111,33 @@
                 setTimeout(() => alert.remove(), 300);
             });
         }, 5000);
+
+        // Mobile hamburger menu toggle
+        const hamburger = document.getElementById('hamburger');
+        const navLinks = document.getElementById('nav-links');
+        const mobileOverlay = document.getElementById('mobile-overlay');
+
+        function toggleMobileMenu() {
+            hamburger.classList.toggle('active');
+            navLinks.classList.toggle('mobile-open');
+            mobileOverlay.classList.toggle('active');
+            document.body.style.overflow = navLinks.classList.contains('mobile-open') ? 'hidden' : '';
+        }
+
+        function closeMobileMenu() {
+            hamburger.classList.remove('active');
+            navLinks.classList.remove('mobile-open');
+            mobileOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        hamburger.addEventListener('click', toggleMobileMenu);
+        mobileOverlay.addEventListener('click', closeMobileMenu);
+
+        // Close mobile menu when clicking a link
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', closeMobileMenu);
+        });
     </script>
 
     {% block scripts %}{% endblock %}

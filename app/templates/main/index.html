@@ -6,11 +6,10 @@
 <section class="hero">
     <div class="hero-content">
         <a href="https://vitchennai.acm.org" target="_blank" rel="noopener noreferrer" class="hero-capsule">
-            <span class="capsule-icon">🌐</span>
-            <span>ACM VIT Chennai Chapter</span>
+            <span>VIT Chennai ACM Student Chapter</span>
             <span class="capsule-arrow">→</span>
         </a>
-        <h1>Join <span class="gradient-text">ACM</span> Student Chapter</h1>
+        <h1>Join <span class="gradient-text">VIT Chennai ACM</span> Student Chapter</h1>
         <p style="font-size: 1.15rem; max-width: 600px; margin: 0 auto 2rem;">Be part of the world's largest computing
             society. Explore opportunities, build skills, and shape the future of technology with us.</p>
 
@@ -19,21 +18,10 @@
             <a href="{{ url_for('student.dashboard') }}" class="btn btn-primary btn-lg">Go to Dashboard</a>
             {% else %}
             <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M12 16v-4M12 8h.01" />
-                </svg>
                 Get Started
             </a>
             {% endif %}
             <a href="{{ url_for('main.membership') }}" class="btn btn-membership btn-lg">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
                 Get Membership
             </a>
             <a href="{{ url_for('main.departments') }}" class="btn btn-secondary btn-lg">View Departments</a>
@@ -46,7 +34,7 @@
     <div class="container">
         <div class="page-header text-center">
             <h2 class="page-title">Our <span class="gradient-text">Departments</span></h2>
-            <p class="page-subtitle">Discover the teams driving innovation at ACM VIT Chennai</p>
+            <p class="page-subtitle">Discover the teams driving innovation at VIT Chennai ACM Student Chapter</p>
         </div>
 
         {% if departments %}
@@ -99,32 +87,37 @@
     <div class="container" style="max-width: 900px;">
         <div
             style="background: linear-gradient(135deg, rgba(0, 133, 202, 0.15) 0%, rgba(0, 198, 255, 0.1) 100%); border: 1px solid var(--border-glow); border-radius: var(--radius-lg); padding: var(--space-3xl); text-align: center;">
-            <h3 style="margin-bottom: 1rem; font-size: 1.8rem;">Ready to Join ACM?</h3>
+            <h3 style="margin-bottom: 1rem; font-size: 1.8rem;">Ready to Join VIT Chennai ACM?</h3>
             <p class="text-muted"
                 style="font-size: 1.05rem; margin-bottom: var(--space-xl); max-width: 600px; margin-left: auto; margin-right: auto;">
-                Become a member of ACM VIT Chennai and unlock exclusive benefits, connect with nearly 100,000 computing
+                Become a member of VIT Chennai ACM Student Chapter and unlock exclusive benefits, connect with nearly
+                100,000 computing
                 professionals worldwide, and shape the future of technology.
             </p>
 
-            <div
-                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: var(--space-lg); margin-bottom: var(--space-xl);">
-                <div>
-                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🌐</div>
-                    <p class="text-muted" style="font-size: 0.9rem;">Global Network of 100k+ Peers</p>
-                </div>
-                <div>
-                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">📚</div>
-                    <p class="text-muted" style="font-size: 0.9rem;">Access to Premium Resources</p>
-                </div>
-                <div>
-                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">💼</div>
-                    <p class="text-muted" style="font-size: 0.9rem;">Career & Job Opportunities</p>
-                </div>
-                <div>
-                    <div style="font-size: 2rem; margin-bottom: 0.5rem;">🏆</div>
-                    <p class="text-muted" style="font-size: 0.9rem;">Recognition & Leadership</p>
-                </div>
-            </div>
+            <ul
+                style="list-style: none; text-align: left; max-width: 500px; margin: 0 auto var(--space-xl); padding: 0;">
+                <li
+                    style="display: flex; align-items: center; gap: var(--space-md); padding: var(--space-sm) 0; border-bottom: 1px solid var(--border-color);">
+                    <span style="color: var(--acm-blue); font-weight: 700;">•</span>
+                    <span><strong>Global Network</strong> — Connect with 100k+ computing professionals worldwide</span>
+                </li>
+                <li
+                    style="display: flex; align-items: center; gap: var(--space-md); padding: var(--space-sm) 0; border-bottom: 1px solid var(--border-color);">
+                    <span style="color: var(--acm-blue); font-weight: 700;">•</span>
+                    <span><strong>Premium Resources</strong> — Access to ACM Digital Library and learning
+                        materials</span>
+                </li>
+                <li
+                    style="display: flex; align-items: center; gap: var(--space-md); padding: var(--space-sm) 0; border-bottom: 1px solid var(--border-color);">
+                    <span style="color: var(--acm-blue); font-weight: 700;">•</span>
+                    <span><strong>Career Growth</strong> — Job opportunities and professional development</span>
+                </li>
+                <li style="display: flex; align-items: center; gap: var(--space-md); padding: var(--space-sm) 0;">
+                    <span style="color: var(--acm-blue); font-weight: 700;">•</span>
+                    <span><strong>Recognition</strong> — Leadership roles and community involvement</span>
+                </li>
+            </ul>
 
             <div style="display: flex; gap: var(--space-md); justify-content: center; flex-wrap: wrap;">
                 <a href="{{ url_for('main.membership') }}" class="btn btn-primary">Become a Member</a>
@@ -140,7 +133,7 @@
     <div class="glass-card" style="width: 90%; max-width: 450px; padding: var(--space-2xl);">
         <div
             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-lg);">
-            <h3>Join ACM Membership</h3>
+            <h3>Join VIT Chennai ACM</h3>
             <button onclick="closeMembershipModal()"
                 style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted);">×</button>
         </div>

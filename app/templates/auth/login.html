@@ -5,7 +5,7 @@
 <section class="hero" style="min-height: 100vh;">
     <div class="container-sm">
         <div class="glass-card text-center">
-            <h1 style="margin-bottom: 0.5rem;">Welcome to <span class="gradient-text">ACM</span></h1>
+            <h1 style="margin-bottom: 0.5rem;">Welcome to <span class="gradient-text">VIT Chennai ACM</span></h1>
             <p class="text-muted mb-xl">Sign in with your Google account to access the recruitment portal</p>
 
             <button id="googleSignInBtn" class="google-btn">
@@ -25,13 +25,17 @@
             <p class="text-muted mt-xl" style="font-size: 0.85rem;">
                 By signing in, you agree to our Terms of Service and Privacy Policy
             </p>
+
+            <a href="{{ url_for('main.index') }}" class="btn btn-secondary mt-lg" style="text-decoration: none;">
+                ← Back to Home
+            </a>
         </div>
     </div>
 </section>
 
 <script type="module">
     import { signInWithGoogle } from "{{ url_for('static', filename='js/auth.js') }}";
-    
+
     document.getElementById('googleSignInBtn').addEventListener('click', signInWithGoogle);
 </script>
 {% endblock %}
