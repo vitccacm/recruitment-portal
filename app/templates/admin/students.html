@@ -119,9 +119,11 @@
 </div>
 
 <script>
+    const deleteBaseUrl = "{{ url_for('admin.delete_student', student_id=0) }}".replace('/0', '');
+
     function confirmDelete(studentId, studentName) {
         document.getElementById('deleteMessage').textContent = `Are you sure you want to delete "${studentName}"?`;
-        document.getElementById('deleteForm').action = `/admin/students/delete/${studentId}`;
+        document.getElementById('deleteForm').action = deleteBaseUrl + '/' + studentId;
         document.getElementById('deleteModal').style.display = 'flex';
     }
 
