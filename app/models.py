@@ -146,8 +146,8 @@ class Department(db.Model):
     
     @property
     def recruitment_status(self):
-        """Get current recruitment status"""
-        now = datetime.utcnow()
+        """Get current recruitment status - uses local server time for comparison"""
+        now = datetime.now()
         if self.recruitment_start and now < self.recruitment_start:
             return 'upcoming'
         elif self.recruitment_end and now > self.recruitment_end:
