@@ -78,6 +78,12 @@
                             Questions
                         </a>
                     </li>
+                    <li>
+                        <a href="{{ url_for('admin.logs') }}" {% if 'logs' in request.endpoint %}class="active" {% endif
+                            %}>
+                            Logs
+                        </a>
+                    </li>
                     <li style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
                         <a href="{{ url_for('main.index') }}">
                             View Site

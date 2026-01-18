@@ -1,13 +1,14 @@
 import os
 import secrets
 import string
+import json
 from flask import render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from functools import wraps
 from werkzeug.utils import secure_filename
 from . import bp
 from .forms import LoginForm, DepartmentCreateForm, DepartmentEditForm, AccountForm, RoundForm
-from ..models import db, Admin, Department, Application, Student, Round, RoundDepartment, RoundCandidate, SiteSettings, ProfileField, DepartmentQuestion, Membership
+from ..models import db, Admin, Department, Application, Student, Round, RoundDepartment, RoundCandidate, SiteSettings, ProfileField, DepartmentQuestion, Membership, QuestionResponse, ActionLog
 
 
 def admin_required(f):
@@ -953,3 +954,118 @@ def unarchive_single_membership(membership_id):
     db.session.commit()
     flash(f'{membership.full_name} moved to pending.', 'success')
     return redirect(url_for('admin.memberships'))
+
+
+# ============ STUDENTS MANAGEMENT ============
+
+@bp.route('/students/delete/<int:student_id>', methods=['POST'])
+@login_required
+@super_admin_required
+def delete_student(student_id):
+    """Delete a student and all related data"""
+    student = Student.query.get_or_404(student_id)
+    
+    student_email = student.email
+    student_name = student.name or student_email
+    google_id = student.google_id
+    
+    try:
+        # Get all applications for this student
+        applications = Application.query.filter_by(student_id=student_id).all()
+        app_ids = [app.id for app in applications]
+        
+        # Delete round candidates for these applications
+        if app_ids:
+            RoundCandidate.query.filter(RoundCandidate.application_id.in_(app_ids)).delete(synchronize_session=False)
+        
+        # Delete question responses for these applications
+        if app_ids:
+            QuestionResponse.query.filter(QuestionResponse.application_id.in_(app_ids)).delete(synchronize_session=False)
+        
+        # Delete applications (cascade should handle this, but being explicit)
+        Application.query.filter_by(student_id=student_id).delete(synchronize_session=False)
+        
+        # Delete Firebase user if exists
+        if google_id:
+            try:
+                import firebase_admin
+                from firebase_admin import auth as firebase_auth
+                # Find user by email instead of google_id (more reliable)
+                try:
+                    firebase_user = firebase_auth.get_user_by_email(student_email)
+                    firebase_auth.delete_user(firebase_user.uid)
+                    current_app.logger.info(f'Deleted Firebase user: {student_email}')
+                except firebase_admin.exceptions.NotFoundError:
+                    current_app.logger.info(f'Firebase user not found: {student_email}')
+            except Exception as e:
+                current_app.logger.warning(f'Could not delete Firebase user: {str(e)}')
+        
+        # Delete the student
+        db.session.delete(student)
+        db.session.commit()
+        
+        # Log the action
+        ActionLog.log(
+            action='delete_student',
+            area='students',
+            details={
+                'student_id': student_id,
+                'student_email': student_email,
+                'student_name': student_name
+            }
+        )
+        
+        flash(f'Student "{student_name}" and all related data deleted successfully.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f'Error deleting student: {str(e)}')
+        flash(f'Error deleting student: {str(e)}', 'error')
+    
+    return redirect(url_for('admin.students'))
+
+
+# ============ ACTION LOGS ============
+
+@bp.route('/logs')
+@login_required
+@super_admin_required
+def logs():
+    """View action logs with filters"""
+    # Get filter parameters
+    area_filter = request.args.get('area', '')
+    user_filter = request.args.get('user', '')
+    action_filter = request.args.get('action', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = 50
+    
+    # Build query
+    query = ActionLog.query
+    
+    if area_filter:
+        query = query.filter(ActionLog.area == area_filter)
+    if user_filter:
+        query = query.filter(ActionLog.user_email.ilike(f'%{user_filter}%'))
+    if action_filter:
+        query = query.filter(ActionLog.action == action_filter)
+    
+    # Order by newest first and paginate
+    logs_pagination = query.order_by(ActionLog.timestamp.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    # Get unique areas and actions for filter dropdowns
+    areas = db.session.query(ActionLog.area).distinct().all()
+    areas = [a[0] for a in areas if a[0]]
+    
+    actions = db.session.query(ActionLog.action).distinct().all()
+    actions = [a[0] for a in actions if a[0]]
+    
+    return render_template('admin/logs.html',
+                         logs=logs_pagination.items,
+                         pagination=logs_pagination,
+                         areas=areas,
+                         actions=actions,
+                         current_area=area_filter,
+                         current_user_filter=user_filter,
+                         current_action=action_filter)
+

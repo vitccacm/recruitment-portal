@@ -63,7 +63,7 @@ class Student(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
-    applications = db.relationship('Application', backref='student', lazy='dynamic')
+    applications = db.relationship('Application', backref='student', lazy='dynamic', cascade='all, delete-orphan')
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -321,3 +321,58 @@ class Membership(db.Model):
     
     def __repr__(self):
         return f'<Membership {self.full_name} ({self.email})>'
+
+
+class ActionLog(db.Model):
+    """Log of all admin and user actions"""
+    __tablename__ = 'action_logs'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    user_type = db.Column(db.String(20))  # 'admin', 'student', 'system'
+    user_id = db.Column(db.Integer)
+    user_email = db.Column(db.String(120))
+    action = db.Column(db.String(50), nullable=False, index=True)
+    area = db.Column(db.String(30), nullable=False, index=True)
+    details = db.Column(db.Text)  # JSON for additional context
+    ip_address = db.Column(db.String(45))
+    
+    @staticmethod
+    def log(action, area, details=None, user=None, ip_address=None):
+        """Helper to create a log entry"""
+        import json
+        from flask_login import current_user
+        from flask import request
+        
+        log_entry = ActionLog(
+            action=action,
+            area=area,
+            details=json.dumps(details) if details else None,
+            ip_address=ip_address or (request.remote_addr if request else None)
+        )
+        
+        # Determine user info
+        if user:
+            if hasattr(user, 'role'):  # Admin
+                log_entry.user_type = 'admin'
+                log_entry.user_id = user.id
+                log_entry.user_email = user.email
+            else:  # Student
+                log_entry.user_type = 'student'
+                log_entry.user_id = user.id
+                log_entry.user_email = user.email
+        elif current_user and current_user.is_authenticated:
+            user_id = current_user.get_id()
+            if user_id.startswith('admin_'):
+                log_entry.user_type = 'admin'
+                log_entry.user_id = int(user_id.replace('admin_', ''))
+            else:
+                log_entry.user_type = 'student'
+                log_entry.user_id = int(user_id.replace('student_', ''))
+            log_entry.user_email = current_user.email
+        else:
+            log_entry.user_type = 'system'
+        
+        db.session.add(log_entry)
+        db.session.commit()
+        return log_entry

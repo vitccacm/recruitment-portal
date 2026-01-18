@@ -378,11 +378,11 @@ def initialize_database(app):
 
 
 def sync_migrate_tables(app):
-    """Sync/migrate all tables - adds any missing tables from models"""
-    print("\n--- Sync/Migrate All Tables ---")
+    """Sync/migrate all tables - adds any missing tables and columns from models"""
+    print("\n--- Sync/Migrate All Tables & Columns ---")
     
     with app.app_context():
-        from sqlalchemy import inspect
+        from sqlalchemy import inspect, text
         from app import models  # Import all models to ensure they're registered
         
         inspector = inspect(db.engine)
@@ -394,31 +394,139 @@ def sync_migrate_tables(app):
         print(f"\nExisting tables in database: {len(existing_tables)}")
         print(f"Tables defined in models: {len(model_tables)}")
         
-        # Find missing tables
+        # Track changes
+        changes_needed = []
+        
+        # ============ CHECK MISSING TABLES ============
         missing_tables = model_tables - existing_tables
         
         if missing_tables:
             print(f"\n⚠️  Missing tables: {', '.join(missing_tables)}")
-            proceed = input("Create missing tables? (y/n): ").strip().lower()
-            if proceed == 'y':
-                db.create_all()
-                print("\n✓ Tables synced successfully!")
-                
-                # Verify
-                new_tables = set(inspector.get_table_names())
-                added = new_tables - existing_tables
-                print(f"✓ Added {len(added)} tables: {', '.join(added) if added else 'None'}")
-            else:
-                print("Sync cancelled.")
-        else:
-            print("\n✓ All tables are up to date. No migration needed.")
+            changes_needed.append(('tables', missing_tables))
         
-        # Show current table summary
-        print("\n--- Current Tables ---")
+        # ============ CHECK MISSING COLUMNS ============
+        print("\n--- Checking for missing columns ---")
+        missing_columns = {}  # {table_name: [(column_name, column_type), ...]}
+        
+        for table_name in existing_tables.intersection(model_tables):
+            # Get existing columns in database
+            db_columns = {col['name']: col for col in inspector.get_columns(table_name)}
+            
+            # Get model columns
+            model_table = db.metadata.tables.get(table_name)
+            if model_table is not None:
+                for column in model_table.columns:
+                    if column.name not in db_columns:
+                        if table_name not in missing_columns:
+                            missing_columns[table_name] = []
+                        
+                        # Get column type string
+                        col_type = str(column.type)
+                        nullable = "NULL" if column.nullable else "NOT NULL"
+                        default = f" DEFAULT {column.default.arg}" if column.default and hasattr(column.default, 'arg') else ""
+                        
+                        missing_columns[table_name].append({
+                            'name': column.name,
+                            'type': col_type,
+                            'nullable': column.nullable,
+                            'default': column.default
+                        })
+        
+        if missing_columns:
+            print(f"\n⚠️  Missing columns found:")
+            for table, cols in missing_columns.items():
+                print(f"  {table}:")
+                for col in cols:
+                    nullable = "NULL" if col['nullable'] else "NOT NULL"
+                    print(f"    - {col['name']}: {col['type']} {nullable}")
+            changes_needed.append(('columns', missing_columns))
+        else:
+            print("✓ All columns are up to date.")
+        
+        # ============ APPLY CHANGES ============
+        if not changes_needed:
+            print("\n✓ Database schema is fully up to date. No migration needed.")
+        else:
+            print(f"\n--- Changes Summary ---")
+            if missing_tables:
+                print(f"  • {len(missing_tables)} missing table(s)")
+            if missing_columns:
+                total_cols = sum(len(cols) for cols in missing_columns.values())
+                print(f"  • {total_cols} missing column(s) across {len(missing_columns)} table(s)")
+            
+            proceed = input("\nApply these changes? (y/n): ").strip().lower()
+            
+            if proceed == 'y':
+                try:
+                    # Create missing tables
+                    if missing_tables:
+                        print("\nCreating missing tables...")
+                        db.create_all()
+                        print(f"✓ Created tables: {', '.join(missing_tables)}")
+                    
+                    # Add missing columns
+                    if missing_columns:
+                        print("\nAdding missing columns...")
+                        is_sqlite = 'sqlite' in str(db.engine.url)
+                        
+                        for table_name, cols in missing_columns.items():
+                            for col in cols:
+                                # Build ALTER TABLE statement
+                                col_name = col['name']
+                                col_type = col['type']
+                                
+                                # SQLite type mapping
+                                if is_sqlite:
+                                    type_map = {
+                                        'VARCHAR': 'TEXT',
+                                        'INTEGER': 'INTEGER',
+                                        'BOOLEAN': 'INTEGER',
+                                        'TEXT': 'TEXT',
+                                        'DATETIME': 'DATETIME',
+                                        'FLOAT': 'REAL',
+                                    }
+                                    # Extract base type
+                                    base_type = col_type.split('(')[0].upper()
+                                    sql_type = type_map.get(base_type, 'TEXT')
+                                else:
+                                    sql_type = col_type
+                                
+                                # Build SQL
+                                sql = f"ALTER TABLE {table_name} ADD COLUMN {col_name} {sql_type}"
+                                
+                                # Add default for NOT NULL columns
+                                if not col['nullable']:
+                                    if 'INT' in sql_type.upper():
+                                        sql += " DEFAULT 0"
+                                    elif 'BOOL' in sql_type.upper() or sql_type.upper() == 'INTEGER':
+                                        sql += " DEFAULT 0"
+                                    elif 'TEXT' in sql_type.upper() or 'VARCHAR' in sql_type.upper():
+                                        sql += " DEFAULT ''"
+                                
+                                try:
+                                    db.session.execute(text(sql))
+                                    print(f"  ✓ Added {table_name}.{col_name}")
+                                except Exception as e:
+                                    print(f"  ✗ Failed to add {table_name}.{col_name}: {e}")
+                        
+                        db.session.commit()
+                    
+                    print("\n✓ Migration completed successfully!")
+                    
+                except Exception as e:
+                    db.session.rollback()
+                    print(f"\n✗ Migration failed: {e}")
+            else:
+                print("Migration cancelled.")
+        
+        # Show final table summary
+        print("\n--- Current Schema Summary ---")
+        inspector = inspect(db.engine)  # Refresh inspector
         final_tables = inspector.get_table_names()
         for table in sorted(final_tables):
             columns = inspector.get_columns(table)
             print(f"  {table}: {len(columns)} columns")
+
 
 
 def main():

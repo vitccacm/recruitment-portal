@@ -58,6 +58,7 @@
                 <th>Batch</th>
                 <th>Profile</th>
                 <th>Joined</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -78,11 +79,56 @@
                     {% endif %}
                 </td>
                 <td>{{ s.created_at.strftime('%b %d, %Y') }}</td>
+                <td>
+                    <button type="button" class="btn btn-secondary btn-sm"
+                        onclick="confirmDelete({{ s.id }}, '{{ s.name or s.email }}')"
+                        style="background: var(--error); border-color: var(--error); padding: 0.25rem 0.5rem; font-size: 0.75rem;">
+                        Delete
+                    </button>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal"
+    style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center;">
+    <div class="glass-card" style="width: 90%; max-width: 450px; padding: 2rem;">
+        <h3 style="margin-bottom: 1rem; color: var(--error);">Confirm Delete</h3>
+        <p id="deleteMessage" style="margin-bottom: 1.5rem;"></p>
+        <p class="text-muted" style="font-size: 0.85rem; margin-bottom: 1.5rem;">
+            This will permanently delete:<br>
+            • All applications by this student<br>
+            • All question responses<br>
+            • Round participation data<br>
+            • Firebase authentication
+        </p>
+        <div style="display: flex; gap: 1rem;">
+            <form id="deleteForm" method="POST" style="flex: 1;">
+                <button type="submit" class="btn"
+                    style="width: 100%; background: var(--error); border-color: var(--error);">
+                    Yes, Delete
+                </button>
+            </form>
+            <button type="button" class="btn btn-secondary" style="flex: 1;"
+                onclick="closeDeleteModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function confirmDelete(studentId, studentName) {
+        document.getElementById('deleteMessage').textContent = `Are you sure you want to delete "${studentName}"?`;
+        document.getElementById('deleteForm').action = `/admin/students/delete/${studentId}`;
+        document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+    }
+</script>
 {% else %}
 <div class="glass-card text-center">
     <p class="text-muted">No students found.</p>
