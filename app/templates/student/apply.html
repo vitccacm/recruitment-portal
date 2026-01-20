@@ -49,7 +49,7 @@
                         endif %}></textarea>
 
                     {% elif q.question_type == 'link' %}
-                    <input type="url" name="question_{{ q.id }}" class="form-control" placeholder="https://" {% if
+                    <input type="text" name="question_{{ q.id }}" class="form-control" placeholder="Enter link" {% if
                         q.is_required %}required{% endif %}>
 
                     {% elif q.question_type == 'single_choice' %}
