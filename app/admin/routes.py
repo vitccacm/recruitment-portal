@@ -956,6 +956,53 @@ def unarchive_single_membership(membership_id):
     return redirect(url_for('admin.memberships'))
 
 
+@bp.route('/memberships/download-csv', methods=['POST'])
+@login_required
+@super_admin_required
+def download_memberships_csv():
+    """Download selected memberships as CSV and auto-approve them"""
+    import csv
+    import io
+    from flask import make_response
+    
+    membership_ids = request.form.getlist('membership_ids')
+    
+    if not membership_ids:
+        flash('No memberships selected.', 'error')
+        return redirect(url_for('admin.memberships'))
+    
+    # Create CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # No header row - just the data as requested
+    count = 0
+    for mid in membership_ids:
+        membership = Membership.query.get(int(mid))
+        if membership:
+            # Write row: lastname, firstname, email, affiliation
+            writer.writerow([
+                membership.last_name,
+                membership.first_name,
+                membership.email,
+                'VIT Chennai Student'
+            ])
+            # Auto-approve the membership
+            if not membership.is_archived:
+                membership.is_archived = True
+                count += 1
+    
+    db.session.commit()
+    
+    # Create response with CSV file
+    output.seek(0)
+    response = make_response(output.getvalue())
+    response.headers['Content-Type'] = 'text/csv'
+    response.headers['Content-Disposition'] = 'attachment; filename=acm_memberships.csv'
+    
+    return response
+
+
 # ============ STUDENTS MANAGEMENT ============
 
 @bp.route('/students/delete/<int:student_id>', methods=['POST'])
