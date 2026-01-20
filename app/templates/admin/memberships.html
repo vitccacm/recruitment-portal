@@ -25,6 +25,7 @@
 
 {% if memberships %}
 <form id="bulkForm" method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <!-- Bulk Actions -->
     <div class="bulk-actions glass-card"
         style="margin-bottom: 1rem; padding: 1rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
@@ -37,9 +38,8 @@
 
         <div style="margin-left: auto; display: flex; gap: 0.5rem;">
             {% if current_status != 'archived' %}
-            <button type="submit" formaction="{{ url_for('admin.download_memberships_csv') }}"
-                class="btn btn-success btn-sm" id="downloadBtn" disabled
-                style="display: flex; align-items: center; gap: 0.25rem;">
+            <button type="button" onclick="downloadAndApprove()" class="btn btn-success btn-sm" id="downloadBtn"
+                disabled style="display: flex; align-items: center; gap: 0.25rem;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -78,7 +78,9 @@
             </thead>
             <tbody>
                 {% for m in memberships %}
-                <tr class="{% if m.is_archived %}archived-row{% endif %}">
+                <tr class="{% if m.is_archived %}archived-row{% endif %}" data-id="{{ m.id }}"
+                    data-firstname="{{ m.first_name }}" data-lastname="{{ m.last_name }}" data-email="{{ m.email }}"
+                    data-archived="{{ m.is_archived|lower }}">
                     <td>
                         <input type="checkbox" name="membership_ids" value="{{ m.id }}" class="row-checkbox"
                             onchange="updateSelectedCount()">
@@ -228,6 +230,73 @@
         if (allCheckboxes.length > 0) {
             selectAll.checked = count === allCheckboxes.length;
             selectAll.indeterminate = count > 0 && count < allCheckboxes.length;
+        }
+    }
+
+    function downloadAndApprove() {
+        const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+        if (checkboxes.length === 0) {
+            alert('No memberships selected.');
+            return;
+        }
+
+        // Collect membership data for CSV
+        const csvRows = [];
+        const membershipIds = [];
+
+        checkboxes.forEach(cb => {
+            const row = cb.closest('tr');
+            const lastName = row.dataset.lastname;
+            const firstName = row.dataset.firstname;
+            const email = row.dataset.email;
+            const isArchived = row.dataset.archived === 'true';
+
+            // Add to CSV (lastname, firstname, email, affiliation)
+            csvRows.push([
+                lastName,
+                firstName,
+                email,
+                'VIT Chennai Student'
+            ].map(field => `"${(field || '').replace(/"/g, '""')}"`).join(','));
+
+            // Only approve if not already archived
+            if (!isArchived) {
+                membershipIds.push(cb.value);
+            }
+        });
+
+        // Generate and download CSV
+        const csvContent = csvRows.join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'acm_memberships.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        // Approve memberships via AJAX if there are any to approve
+        if (membershipIds.length > 0) {
+            const formData = new FormData();
+            membershipIds.forEach(id => formData.append('membership_ids', id));
+            formData.append('csrf_token', document.querySelector('input[name="csrf_token"]').value);
+
+            fetch('{{ url_for("admin.archive_memberships") }}', {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                if (response.ok) {
+                    // Reload the page to show updated status
+                    window.location.reload();
+                } else {
+                    alert('Error approving memberships. Please try again.');
+                }
+            }).catch(error => {
+                console.error('Error:', error);
+                alert('Error approving memberships. Please try again.');
+            });
         }
     }
 </script>
