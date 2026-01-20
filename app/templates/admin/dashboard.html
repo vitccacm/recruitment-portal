@@ -2,28 +2,231 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
+<style>
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .info-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 1.5rem;
+    }
+
+    .info-card h4 {
+        margin-bottom: 1rem;
+        font-size: 1rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .stat-row:last-child {
+        border-bottom: none;
+    }
+
+    .stat-row .label {
+        color: var(--text-secondary);
+    }
+
+    .stat-row .value {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .stat-row .value.highlight {
+        color: var(--primary);
+    }
+
+    .stat-row .trend {
+        font-size: 0.8rem;
+        color: #22c55e;
+        margin-left: 0.5rem;
+    }
+
+    .big-stat {
+        text-align: center;
+        padding: 1rem;
+    }
+
+    .big-stat .value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .big-stat .label {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+
+    .big-stat .sub {
+        color: #22c55e;
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+    }
+
+    .action-log-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .action-log-item:last-child {
+        border-bottom: none;
+    }
+
+    .action-log-item .action-info {
+        flex: 1;
+    }
+
+    .action-log-item .action-name {
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    .action-log-item .action-area {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        background: var(--bg-secondary);
+        padding: 0.15rem 0.5rem;
+        border-radius: 4px;
+        margin-left: 0.5rem;
+    }
+
+    .action-log-item .action-user {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .action-log-item .action-time {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        white-space: nowrap;
+    }
+</style>
+
 <div class="page-header">
     <h1 class="page-title">Admin <span class="gradient-text">Dashboard</span></h1>
     <p class="page-subtitle">Overview of your recruitment portal</p>
 </div>
 
-<!-- Stats -->
+<!-- Main Stats Grid -->
 <div class="stats-grid mb-xl">
     <div class="stat-card">
         <div class="stat-value">{{ stats.total_students }}</div>
         <div class="stat-label">Total Students</div>
+        {% if stats.students_today > 0 %}
+        <div style="color: #22c55e; font-size: 0.85rem; margin-top: 0.25rem;">+{{ stats.students_today }} today</div>
+        {% endif %}
     </div>
     <div class="stat-card">
         <div class="stat-value">{{ stats.total_applications }}</div>
         <div class="stat-label">Total Applications</div>
+        {% if stats.applications_today > 0 %}
+        <div style="color: #22c55e; font-size: 0.85rem; margin-top: 0.25rem;">+{{ stats.applications_today }} today
+        </div>
+        {% endif %}
     </div>
     <div class="stat-card">
         <div class="stat-value">{{ stats.pending_applications }}</div>
         <div class="stat-label">Pending Review</div>
     </div>
     <div class="stat-card">
-        <div class="stat-value">{{ stats.active_departments }}</div>
-        <div class="stat-label">Active Departments</div>
+        <div class="stat-value">{{ stats.total_memberships }}</div>
+        <div class="stat-label">Total Memberships</div>
+        {% if stats.memberships_today > 0 %}
+        <div style="color: #22c55e; font-size: 0.85rem; margin-top: 0.25rem;">+{{ stats.memberships_today }} today</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Info Cards Grid -->
+<div class="dashboard-grid">
+    <!-- Applications Breakdown -->
+    <div class="info-card">
+        <h4>Applications Breakdown</h4>
+        <div class="stat-row">
+            <span class="label">Total Applications</span>
+            <span class="value">{{ stats.total_applications }}</span>
+        </div>
+        <div class="stat-row">
+            <span class="label">Pending</span>
+            <span class="value" style="color: #f59e0b;">{{ stats.pending_applications }}</span>
+        </div>
+        <div class="stat-row">
+            <span class="label">Accepted</span>
+            <span class="value" style="color: #22c55e;">{{ stats.accepted_applications }}</span>
+        </div>
+        <div class="stat-row">
+            <span class="label">Rejected</span>
+            <span class="value" style="color: #ef4444;">{{ stats.rejected_applications }}</span>
+        </div>
+    </div>
+
+    <!-- Departments & Admins -->
+    <div class="info-card">
+        <h4>Departments & Admins</h4>
+        <div class="stat-row">
+            <span class="label">Total Departments</span>
+            <span class="value">{{ stats.total_departments }}</span>
+        </div>
+        <div class="stat-row">
+            <span class="label">Active Departments</span>
+            <span class="value highlight">{{ stats.active_departments }}</span>
+        </div>
+        <div class="stat-row">
+            <span class="label">Total Admins</span>
+            <span class="value">{{ stats.total_admins }}</span>
+        </div>
+    </div>
+
+    <!-- Memberships -->
+    <div class="info-card">
+        <h4>Memberships</h4>
+        <div class="stat-row">
+            <span class="label">Total Memberships</span>
+            <span class="value">{{ stats.total_memberships }}</span>
+        </div>
+        <div class="stat-row">
+            <span class="label">Pending Approval</span>
+            <span class="value" style="color: #f59e0b;">{{ stats.pending_memberships }}</span>
+        </div>
+        <div class="stat-row">
+            <span class="label">Approved</span>
+            <span class="value" style="color: #22c55e;">{{ stats.total_memberships - stats.pending_memberships }}</span>
+        </div>
+    </div>
+
+    <!-- Activity Today -->
+    <div class="info-card">
+        <h4>Activity Today</h4>
+        <div class="stat-row">
+            <span class="label">Page Visits (Today)</span>
+            <span class="value">{{ stats.page_visits_today }}</span>
+        </div>
+        <div class="stat-row">
+            <span class="label">Page Visits (Week)</span>
+            <span class="value">{{ stats.page_visits_week }}</span>
+        </div>
+        <div class="stat-row">
+            <span class="label">Admin Actions</span>
+            <span class="value">{{ stats.actions_today }}</span>
+        </div>
     </div>
 </div>
 
@@ -35,83 +238,108 @@
             + Add Department
         </a>
         <a href="{{ url_for('admin.applications') }}" class="btn btn-secondary">
-            📋 Review Applications
+            Review Applications
         </a>
         <a href="{{ url_for('admin.departments') }}" class="btn btn-secondary">
-            🏢 Departments
+            Departments
         </a>
         <a href="{{ url_for('admin.students') }}" class="btn btn-secondary">
-            👥 Students
+            Students
         </a>
         <a href="{{ url_for('admin.memberships') }}" class="btn btn-secondary">
-            📝 Memberships
+            Memberships
         </a>
         <a href="{{ url_for('admin.rounds') }}" class="btn btn-secondary">
-            🎯 Rounds
+            Rounds
+        </a>
+        <a href="{{ url_for('admin.analytics') }}" class="btn btn-secondary">
+            Analytics
         </a>
     </div>
 </div>
 
-<!-- Quick Links Grid -->
-<div class="glass-card mb-xl">
+<!-- Two Column Layout -->
+<div class="dashboard-grid">
+    <!-- Recent Applications -->
+    <div class="card">
+        <div class="flex justify-between items-center mb-lg">
+            <h3>Recent Applications</h3>
+            <a href="{{ url_for('admin.applications') }}" class="btn btn-outline btn-sm">View All</a>
+        </div>
+
+        {% if recent_applications %}
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in recent_applications[:5] %}
+                    <tr>
+                        <td>
+                            <strong>{{ app.student.name or app.student.email.split('@')[0] }}</strong>
+                        </td>
+                        <td>{{ app.department.name }}</td>
+                        <td>
+                            <span class="badge badge-{{ app.status }}">{{ app.status|capitalize }}</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted">No applications yet.</p>
+        {% endif %}
+    </div>
+
+    <!-- Recent Admin Activity -->
+    <div class="card">
+        <div class="flex justify-between items-center mb-lg">
+            <h3>Recent Admin Activity</h3>
+            <a href="{{ url_for('admin.logs') }}" class="btn btn-outline btn-sm">View Logs</a>
+        </div>
+
+        {% if recent_actions %}
+        {% for action in recent_actions %}
+        <div class="action-log-item">
+            <div class="action-info">
+                <span class="action-name">{{ action.action.replace('_', ' ').title() }}</span>
+                <span class="action-area">{{ action.area }}</span>
+                <div class="action-user">{{ action.user_email or 'System' }}</div>
+            </div>
+            <div class="action-time">
+                {{ action.timestamp.strftime('%H:%M') if action.timestamp else 'N/A' }}
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p class="text-muted">No recent admin activity.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Management Links -->
+<div class="glass-card mb-xl" style="margin-top: 1.5rem;">
     <h3 class="mb-lg">Management</h3>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
         <a href="{{ url_for('admin.accounts') }}" class="stat-card" style="text-decoration: none; cursor: pointer;">
-            <div class="stat-value" style="font-size: 1.5rem;">⚙️</div>
             <div class="stat-label">Accounts</div>
         </a>
         <a href="{{ url_for('admin.settings') }}" class="stat-card" style="text-decoration: none; cursor: pointer;">
-            <div class="stat-value" style="font-size: 1.5rem;">🔧</div>
             <div class="stat-label">Settings</div>
         </a>
         <a href="{{ url_for('admin.profile_fields') }}" class="stat-card"
             style="text-decoration: none; cursor: pointer;">
-            <div class="stat-value" style="font-size: 1.5rem;">📝</div>
             <div class="stat-label">Profile Fields</div>
         </a>
+        <a href="{{ url_for('admin.logs') }}" class="stat-card" style="text-decoration: none; cursor: pointer;">
+            <div class="stat-label">Action Logs</div>
+        </a>
     </div>
-</div>
-
-<!-- Recent Applications -->
-<div class="card">
-    <div class="flex justify-between items-center mb-lg">
-        <h3>Recent Applications</h3>
-        <a href="{{ url_for('admin.applications') }}" class="btn btn-outline btn-sm">View All</a>
-    </div>
-
-    {% if recent_applications %}
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>Student</th>
-                    <th>Department</th>
-                    <th>Position</th>
-                    <th>Applied</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for app in recent_applications %}
-                <tr>
-                    <td>
-                        <strong>{{ app.student.name or app.student.email }}</strong>
-                        <br><span class="text-muted" style="font-size: 0.85rem;">{{ app.student.reg_no or 'No Reg No'
-                            }}</span>
-                    </td>
-                    <td>{{ app.department.name }}</td>
-                    <td>{{ app.position or '-' }}</td>
-                    <td>{{ app.applied_at.strftime('%b %d, %Y') }}</td>
-                    <td>
-                        <span class="badge badge-{{ app.status }}">{{ app.status|capitalize }}</span>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-    <p class="text-muted">No applications yet.</p>
-    {% endif %}
 </div>
 {% endblock %}

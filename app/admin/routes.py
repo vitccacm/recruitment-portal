@@ -97,17 +97,43 @@ def logout():
 @super_admin_required
 def dashboard():
     """Admin dashboard with stats"""
+    from datetime import datetime, timedelta
+    from sqlalchemy import func
+    
+    today = datetime.utcnow().date()
+    week_ago = today - timedelta(days=7)
+    
+    # Basic stats
     stats = {
         'total_students': Student.query.count(),
+        'students_today': Student.query.filter(func.date(Student.created_at) == today).count(),
         'total_departments': Department.query.count(),
         'active_departments': Department.query.filter_by(is_active=True).count(),
         'total_applications': Application.query.count(),
+        'applications_today': Application.query.filter(func.date(Application.applied_at) == today).count(),
         'pending_applications': Application.query.filter_by(status='pending').count(),
-        'total_admins': Admin.query.filter_by(role='admin').count(),
-        'total_dept_admins': Admin.query.filter_by(role='dept-admin').count(),
+        'accepted_applications': Application.query.filter_by(status='accepted').count(),
+        'rejected_applications': Application.query.filter_by(status='rejected').count(),
+        'total_memberships': Membership.query.count(),
+        'memberships_today': Membership.query.filter(func.date(Membership.created_at) == today).count(),
+        'pending_memberships': Membership.query.filter_by(is_archived=False).count(),
+        'total_admins': Admin.query.count(),
+        'page_visits_today': PageVisit.query.filter(func.date(PageVisit.timestamp) == today).count(),
+        'page_visits_week': PageVisit.query.filter(PageVisit.timestamp >= datetime.combine(week_ago, datetime.min.time())).count(),
+        'actions_today': ActionLog.query.filter(func.date(ActionLog.timestamp) == today).count(),
     }
+    
     recent_applications = Application.query.order_by(Application.applied_at.desc()).limit(10).all()
-    return render_template('admin/dashboard.html', stats=stats, recent_applications=recent_applications)
+    
+    # Recent admin actions
+    recent_actions = ActionLog.query.filter(
+        ActionLog.user_type == 'admin'
+    ).order_by(ActionLog.timestamp.desc()).limit(5).all()
+    
+    return render_template('admin/dashboard.html', 
+                          stats=stats, 
+                          recent_applications=recent_applications,
+                          recent_actions=recent_actions)
 
 
 @bp.route('/analytics')
