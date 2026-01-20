@@ -56,10 +56,22 @@ def login():
         admin = Admin.query.filter_by(email=form.email.data).first()
         if admin and admin.check_password(form.password.data):
             login_user(admin)
+            ActionLog.log(
+                action='login',
+                area='auth',
+                details={'email': admin.email, 'role': admin.role},
+                user=admin
+            )
             flash(f'Welcome back, {admin.name or "Admin"}!', 'success')
             if admin.is_dept_admin:
                 return redirect(url_for('dept.dashboard'))
             return redirect(url_for('admin.dashboard'))
+        # Log failed login attempt
+        ActionLog.log(
+            action='login_failed',
+            area='auth',
+            details={'attempted_email': form.email.data}
+        )
         flash('Invalid email or password.', 'error')
     
     return render_template('admin/login.html', form=form)
@@ -70,6 +82,11 @@ def login():
 @admin_required
 def logout():
     """Admin logout"""
+    ActionLog.log(
+        action='logout',
+        area='auth',
+        details={'email': current_user.email}
+    )
     logout_user()
     flash('You have been logged out.', 'info')
     return redirect(url_for('admin.login'))
@@ -93,6 +110,123 @@ def dashboard():
     return render_template('admin/dashboard.html', stats=stats, recent_applications=recent_applications)
 
 
+@bp.route('/analytics')
+@login_required
+@super_admin_required
+def analytics():
+    """Analytics dashboard - HTML shell with skeleton loaders"""
+    return render_template('admin/analytics.html')
+
+
+@bp.route('/api/analytics')
+@login_required
+@super_admin_required
+def api_analytics():
+    """API endpoint returning all analytics data as JSON"""
+    from datetime import datetime, timedelta
+    from flask import jsonify
+    from sqlalchemy import func
+    
+    today = datetime.utcnow().date()
+    week_ago = today - timedelta(days=7)
+    
+    # Overview Stats
+    all_students = Student.query.all()
+    complete_profiles = [s for s in all_students if s.profile_completion >= 75]
+    students_with_apps = db.session.query(Application.student_id).distinct().count()
+    
+    overview = {
+        'total_students': len(all_students),
+        'students_today': Student.query.filter(func.date(Student.created_at) == today).count(),
+        'total_applications': Application.query.count(),
+        'applications_today': Application.query.filter(func.date(Application.applied_at) == today).count(),
+        'pending_applications': Application.query.filter_by(status='pending').count(),
+        'total_memberships': Membership.query.count(),
+        'memberships_today': Membership.query.filter(func.date(Membership.created_at) == today).count(),
+        'active_departments': Department.query.filter_by(is_active=True).count(),
+        'total_admins': Admin.query.count(),
+    }
+    
+    # Applications by Department
+    dept_apps = db.session.query(
+        Department.name,
+        func.count(Application.id)
+    ).outerjoin(Application).group_by(Department.id).all()
+    
+    applications_by_dept = {
+        'labels': [d[0] for d in dept_apps],
+        'values': [d[1] for d in dept_apps]
+    }
+    
+    # Application Status Distribution
+    application_status = {
+        'pending': Application.query.filter_by(status='pending').count(),
+        'accepted': Application.query.filter_by(status='accepted').count(),
+        'rejected': Application.query.filter_by(status='rejected').count(),
+    }
+    
+    # Signups Trend (last 7 days)
+    signups_trend = {'labels': [], 'students': [], 'memberships': []}
+    for i in range(6, -1, -1):
+        day = today - timedelta(days=i)
+        signups_trend['labels'].append(day.strftime('%b %d'))
+        signups_trend['students'].append(
+            Student.query.filter(func.date(Student.created_at) == day).count()
+        )
+        signups_trend['memberships'].append(
+            Membership.query.filter(func.date(Membership.created_at) == day).count()
+        )
+    
+    # Top Admins by Activity (last 7 days)
+    top_admins = db.session.query(
+        ActionLog.user_email,
+        func.count(ActionLog.id)
+    ).filter(
+        ActionLog.user_type == 'admin',
+        ActionLog.timestamp >= datetime.combine(week_ago, datetime.min.time())
+    ).group_by(ActionLog.user_email).order_by(func.count(ActionLog.id).desc()).limit(5).all()
+    
+    top_admins_data = [{'email': a[0], 'count': a[1]} for a in top_admins if a[0]]
+    
+    # Membership Stats
+    membership_stats = {
+        'total': Membership.query.count(),
+        'pending': Membership.query.filter_by(is_archived=False).count(),
+        'approved': Membership.query.filter_by(is_archived=True).count(),
+    }
+    
+    # Student Stats
+    student_stats = {
+        'total': len(all_students),
+        'complete_profiles': len(complete_profiles),
+        'applied': students_with_apps,
+    }
+    
+    # Log Stats
+    log_stats = {
+        'today': ActionLog.query.filter(func.date(ActionLog.timestamp) == today).count(),
+        'this_week': ActionLog.query.filter(ActionLog.timestamp >= datetime.combine(week_ago, datetime.min.time())).count(),
+        'logins_today': ActionLog.query.filter(
+            func.date(ActionLog.timestamp) == today,
+            ActionLog.action == 'login'
+        ).count(),
+        'failed_logins': ActionLog.query.filter(
+            ActionLog.timestamp >= datetime.combine(week_ago, datetime.min.time()),
+            ActionLog.action == 'login_failed'
+        ).count(),
+    }
+    
+    return jsonify({
+        'overview': overview,
+        'applications_by_dept': applications_by_dept,
+        'application_status': application_status,
+        'signups_trend': signups_trend,
+        'top_admins': top_admins_data,
+        'membership_stats': membership_stats,
+        'student_stats': student_stats,
+        'log_stats': log_stats,
+    })
+
 @bp.route('/departments')
 @login_required
 @super_admin_required
@@ -112,6 +246,11 @@ def add_department():
         department = Department(name=form.name.data, is_active=False)
         db.session.add(department)
         db.session.commit()
+        ActionLog.log(
+            action='create_department',
+            area='departments',
+            details={'department_id': department.id, 'name': department.name}
+        )
         flash(f'Department "{department.name}" created! Now add more details.', 'success')
         return redirect(url_for('admin.edit_department', dept_id=department.id))
     
@@ -155,6 +294,11 @@ def edit_department(dept_id):
             department.image_path = f"uploads/{filename}"
         
         db.session.commit()
+        ActionLog.log(
+            action='update_department',
+            area='departments',
+            details={'department_id': department.id, 'name': department.name}
+        )
         flash('Department updated successfully!', 'success')
         return redirect(url_for('admin.department_detail', dept_id=dept_id))
     
@@ -171,9 +315,15 @@ def delete_department(dept_id):
     # Delete associated applications first
     Application.query.filter_by(department_id=dept_id).delete()
     
+    dept_name = department.name
     db.session.delete(department)
     db.session.commit()
-    flash(f'Department "{department.name}" deleted.', 'success')
+    ActionLog.log(
+        action='delete_department',
+        area='departments',
+        details={'department_id': dept_id, 'name': dept_name}
+    )
+    flash(f'Department "{dept_name}" deleted.', 'success')
     return redirect(url_for('admin.departments'))
 
 
@@ -186,6 +336,11 @@ def toggle_department(dept_id):
     department.is_active = not department.is_active
     db.session.commit()
     status = 'activated' if department.is_active else 'deactivated'
+    ActionLog.log(
+        action='toggle_department',
+        area='departments',
+        details={'department_id': dept_id, 'name': department.name, 'is_active': department.is_active}
+    )
     flash(f'Department "{department.name}" {status}.', 'success')
     return redirect(url_for('admin.departments'))
 
@@ -225,8 +380,20 @@ def update_application_status(app_id, status):
         return redirect(url_for('admin.applications'))
     
     application = Application.query.get_or_404(app_id)
+    old_status = application.status
     application.status = status
     db.session.commit()
+    ActionLog.log(
+        action='update_application_status',
+        area='applications',
+        details={
+            'application_id': app_id,
+            'student_email': application.student.email,
+            'department': application.department.name,
+            'old_status': old_status,
+            'new_status': status
+        }
+    )
     flash(f'Application status updated to {status}.', 'success')
     return redirect(url_for('admin.applications'))
 
@@ -281,6 +448,12 @@ def add_account():
         db.session.add(admin)
         db.session.commit()
         
+        ActionLog.log(
+            action='create_account',
+            area='accounts',
+            details={'account_id': admin.id, 'email': admin.email, 'role': role}
+        )
+        
         # Show the generated password
         if form.generate_password.data:
             flash(f'Account created! Generated password: {password}', 'success')
@@ -328,6 +501,11 @@ def edit_account(admin_id):
             flash('Password updated!', 'info')
         
         db.session.commit()
+        ActionLog.log(
+            action='update_account',
+            area='accounts',
+            details={'account_id': admin.id, 'email': admin.email, 'role': admin.role}
+        )
         flash('Account updated successfully!', 'success')
         return redirect(url_for('admin.accounts'))
     
@@ -350,9 +528,15 @@ def delete_account(admin_id):
         flash('Cannot delete the default admin account.', 'error')
         return redirect(url_for('admin.accounts'))
     
+    admin_email = admin.email
     db.session.delete(admin)
     db.session.commit()
-    flash(f'Account "{admin.email}" deleted.', 'success')
+    ActionLog.log(
+        action='delete_account',
+        area='accounts',
+        details={'account_id': admin_id, 'email': admin_email}
+    )
+    flash(f'Account "{admin_email}" deleted.', 'success')
     return redirect(url_for('admin.accounts'))
 
 
@@ -381,6 +565,11 @@ def reset_account_password(admin_id):
     
     admin.set_password(new_password)
     db.session.commit()
+    ActionLog.log(
+        action='reset_password',
+        area='accounts',
+        details={'account_id': admin_id, 'email': admin.email}
+    )
     flash(f'Password reset for "{admin.email}".', 'success')
     return redirect(url_for('admin.accounts'))
 
@@ -424,6 +613,12 @@ def add_round():
             rd = RoundDepartment(round_id=round_obj.id, department_id=dept.id)
             db.session.add(rd)
         db.session.commit()
+        
+        ActionLog.log(
+            action='create_round',
+            area='rounds',
+            details={'round_id': round_obj.id, 'name': round_obj.name}
+        )
         
         flash(f'Round "{round_obj.name}" created successfully!', 'success')
         return redirect(url_for('admin.round_detail', round_id=round_obj.id))
@@ -481,6 +676,11 @@ def edit_round(round_id):
         round_obj.order = form.order.data or 0
         
         db.session.commit()
+        ActionLog.log(
+            action='update_round',
+            area='rounds',
+            details={'round_id': round_id, 'name': round_obj.name}
+        )
         flash('Round updated successfully!', 'success')
         return redirect(url_for('admin.round_detail', round_id=round_id))
     
@@ -506,6 +706,11 @@ def delete_round(round_id):
     
     db.session.delete(round_obj)
     db.session.commit()
+    ActionLog.log(
+        action='delete_round',
+        area='rounds',
+        details={'round_id': round_id, 'name': name}
+    )
     flash(f'Round "{name}" deleted.', 'success')
     return redirect(url_for('admin.rounds'))
 
@@ -519,6 +724,11 @@ def toggle_round_lock(round_id, dept_id):
     rd.is_locked = not rd.is_locked
     db.session.commit()
     status = 'locked' if rd.is_locked else 'unlocked'
+    ActionLog.log(
+        action='toggle_round_lock',
+        area='rounds',
+        details={'round_id': round_id, 'department': rd.department.name, 'is_locked': rd.is_locked}
+    )
     flash(f'Round {status} for {rd.department.name}.', 'success')
     return redirect(url_for('admin.round_detail', round_id=round_id))
 
@@ -532,6 +742,11 @@ def toggle_round_release(round_id, dept_id):
     rd.results_released = not rd.results_released
     db.session.commit()
     status = 'released' if rd.results_released else 'hidden'
+    ActionLog.log(
+        action='toggle_results_release',
+        area='rounds',
+        details={'round_id': round_id, 'department': rd.department.name, 'results_released': rd.results_released}
+    )
     flash(f'Results {status} for {rd.department.name}.', 'success')
     return redirect(url_for('admin.round_detail', round_id=round_id))
 
@@ -545,6 +760,11 @@ def toggle_notes_public(round_id, dept_id):
     rd.notes_public = not rd.notes_public
     db.session.commit()
     status = 'public' if rd.notes_public else 'hidden'
+    ActionLog.log(
+        action='toggle_notes_visibility',
+        area='rounds',
+        details={'round_id': round_id, 'department': rd.department.name, 'notes_public': rd.notes_public}
+    )
     flash(f'Notes now {status} for {rd.department.name}.', 'success')
     return redirect(url_for('admin.round_detail', round_id=round_id))
 
@@ -562,6 +782,17 @@ def settings():
         SiteSettings.set('allow_google', 'true' if request.form.get('allow_google') else 'false')
         SiteSettings.set('allow_email', 'true' if request.form.get('allow_email') else 'false')
         SiteSettings.set('allowed_domains', request.form.get('allowed_domains', '').strip())
+        
+        ActionLog.log(
+            action='update_settings',
+            area='settings',
+            details={
+                'allow_signup': request.form.get('allow_signup') is not None,
+                'allow_google': request.form.get('allow_google') is not None,
+                'allow_email': request.form.get('allow_email') is not None,
+                'allowed_domains': request.form.get('allowed_domains', '').strip()
+            }
+        )
         
         flash('Settings updated successfully!', 'success')
         return redirect(url_for('admin.settings'))
@@ -605,6 +836,11 @@ def add_profile_field():
         )
         db.session.add(field)
         db.session.commit()
+        ActionLog.log(
+            action='create_profile_field',
+            area='profile_fields',
+            details={'field_id': field.id, 'field_name': field.field_name, 'label': field.label}
+        )
         flash('Profile field added!', 'success')
         return redirect(url_for('admin.profile_fields'))
     
@@ -627,6 +863,11 @@ def edit_profile_field(field_id):
         field.is_enabled = 'is_enabled' in request.form
         field.order = int(request.form.get('order', 0))
         db.session.commit()
+        ActionLog.log(
+            action='update_profile_field',
+            area='profile_fields',
+            details={'field_id': field.id, 'field_name': field.field_name, 'label': field.label}
+        )
         flash('Profile field updated!', 'success')
         return redirect(url_for('admin.profile_fields'))
     
@@ -639,8 +880,14 @@ def edit_profile_field(field_id):
 def delete_profile_field(field_id):
     """Delete a profile field"""
     field = ProfileField.query.get_or_404(field_id)
+    field_name = field.field_name
     db.session.delete(field)
     db.session.commit()
+    ActionLog.log(
+        action='delete_profile_field',
+        area='profile_fields',
+        details={'field_id': field_id, 'field_name': field_name}
+    )
     flash('Profile field deleted.', 'success')
     return redirect(url_for('admin.profile_fields'))
 
@@ -686,6 +933,11 @@ def add_dept_question(dept_id):
         )
         db.session.add(q)
         db.session.commit()
+        ActionLog.log(
+            action='create_question',
+            area='questions',
+            details={'question_id': q.id, 'department': department.name, 'question_type': q.question_type}
+        )
         flash('Question added!', 'success')
         return redirect(url_for('admin.dept_questions', dept_id=dept_id))
     
@@ -709,6 +961,11 @@ def edit_dept_question(dept_id, q_id):
         q.allowed_extensions = request.form.get('allowed_extensions', 'pdf')
         q.order = int(request.form.get('order', 0))
         db.session.commit()
+        ActionLog.log(
+            action='update_question',
+            area='questions',
+            details={'question_id': q.id, 'department': department.name}
+        )
         flash('Question updated!', 'success')
         return redirect(url_for('admin.dept_questions', dept_id=dept_id))
     
@@ -721,8 +978,14 @@ def edit_dept_question(dept_id, q_id):
 def delete_dept_question(dept_id, q_id):
     """Delete a department question"""
     q = DepartmentQuestion.query.get_or_404(q_id)
+    department = Department.query.get(dept_id)
     db.session.delete(q)
     db.session.commit()
+    ActionLog.log(
+        action='delete_question',
+        area='questions',
+        details={'question_id': q_id, 'department': department.name if department else 'Unknown'}
+    )
     flash('Question deleted.', 'success')
     return redirect(url_for('admin.dept_questions', dept_id=dept_id))
 
@@ -893,6 +1156,11 @@ def archive_memberships():
             count += 1
     
     db.session.commit()
+    ActionLog.log(
+        action='archive_memberships',
+        area='memberships',
+        details={'count': count, 'membership_ids': [int(mid) for mid in membership_ids]}
+    )
     flash(f'{count} membership(s) archived successfully.', 'success')
     return redirect(url_for('admin.memberships'))
 
@@ -916,6 +1184,11 @@ def unarchive_memberships():
             count += 1
     
     db.session.commit()
+    ActionLog.log(
+        action='unarchive_memberships',
+        area='memberships',
+        details={'count': count, 'membership_ids': [int(mid) for mid in membership_ids]}
+    )
     flash(f'{count} membership(s) restored successfully.', 'success')
     return redirect(url_for('admin.memberships'))
 
@@ -926,8 +1199,15 @@ def unarchive_memberships():
 def delete_membership(membership_id):
     """Delete a membership signup"""
     membership = Membership.query.get_or_404(membership_id)
+    member_email = membership.email
+    member_name = membership.full_name
     db.session.delete(membership)
     db.session.commit()
+    ActionLog.log(
+        action='delete_membership',
+        area='memberships',
+        details={'membership_id': membership_id, 'email': member_email, 'name': member_name}
+    )
     flash('Membership deleted.', 'success')
     return redirect(url_for('admin.memberships'))
 
@@ -940,6 +1220,11 @@ def archive_single_membership(membership_id):
     membership = Membership.query.get_or_404(membership_id)
     membership.is_archived = True
     db.session.commit()
+    ActionLog.log(
+        action='approve_membership',
+        area='memberships',
+        details={'membership_id': membership_id, 'email': membership.email, 'name': membership.full_name}
+    )
     flash(f'{membership.full_name} approved successfully.', 'success')
     return redirect(url_for('admin.memberships'))
 
@@ -952,6 +1237,11 @@ def unarchive_single_membership(membership_id):
     membership = Membership.query.get_or_404(membership_id)
     membership.is_archived = False
     db.session.commit()
+    ActionLog.log(
+        action='pending_membership',
+        area='memberships',
+        details={'membership_id': membership_id, 'email': membership.email, 'name': membership.full_name}
+    )
     flash(f'{membership.full_name} moved to pending.', 'success')
     return redirect(url_for('admin.memberships'))
 
@@ -993,6 +1283,12 @@ def download_memberships_csv():
                 count += 1
     
     db.session.commit()
+    
+    ActionLog.log(
+        action='download_memberships',
+        area='memberships',
+        details={'downloaded_count': len(membership_ids), 'auto_approved_count': count}
+    )
     
     # Create response with CSV file
     output.seek(0)

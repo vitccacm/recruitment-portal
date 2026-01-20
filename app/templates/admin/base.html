@@ -25,6 +25,12 @@
                         </a>
                     </li>
                     <li>
+                        <a href="{{ url_for('admin.analytics') }}" {% if 'analytics' in request.endpoint
+                            %}class="active" {% endif %}>
+                            📊 Analytics
+                        </a>
+                    </li>
+                    <li>
                         <a href="{{ url_for('admin.departments') }}" {% if 'department' in request.endpoint
                             %}class="active" {% endif %}>
                             Departments

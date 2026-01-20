@@ -5,7 +5,7 @@ from functools import wraps
 from werkzeug.utils import secure_filename
 from . import bp
 from ..admin.forms import DepartmentEditForm
-from ..models import db, Admin, Department, Application, Round, RoundDepartment, RoundCandidate, DepartmentQuestion
+from ..models import db, Admin, Department, Application, Round, RoundDepartment, RoundCandidate, DepartmentQuestion, ActionLog
 
 
 def dept_admin_required(f):
@@ -109,6 +109,11 @@ def edit_department():
             department.image_path = f"uploads/{filename}"
         
         db.session.commit()
+        ActionLog.log(
+            action='update_department',
+            area='departments',
+            details={'department_id': department.id, 'name': department.name}
+        )
         flash('Department updated successfully!', 'success')
         return redirect(url_for('dept.view_department'))
     
@@ -219,6 +224,16 @@ def toggle_candidate(round_id, app_id):
         db.session.add(rc)
     
     db.session.commit()
+    ActionLog.log(
+        action='toggle_candidate',
+        area='rounds',
+        details={
+            'round_id': round_id,
+            'application_id': app_id,
+            'student_email': app.student.email,
+            'new_status': rc.status
+        }
+    )
     return redirect(url_for('dept.round_detail', round_id=round_id))
 
 
@@ -246,6 +261,11 @@ def update_notes(round_id, app_id):
     
     rc.notes = request.form.get('notes', '')
     db.session.commit()
+    ActionLog.log(
+        action='update_candidate_notes',
+        area='rounds',
+        details={'round_id': round_id, 'application_id': app_id, 'student_email': app.student.email}
+    )
     flash('Notes updated.', 'success')
     return redirect(url_for('dept.round_detail', round_id=round_id))
 
@@ -280,6 +300,12 @@ def add_question():
         )
         db.session.add(q)
         db.session.commit()
+        department = Department.query.get(current_user.department_id)
+        ActionLog.log(
+            action='create_question',
+            area='questions',
+            details={'question_id': q.id, 'department': department.name if department else 'Unknown', 'question_type': q.question_type}
+        )
         flash('Question added!', 'success')
         return redirect(url_for('dept.questions'))
     
@@ -305,6 +331,12 @@ def edit_question(q_id):
         q.allowed_extensions = request.form.get('allowed_extensions', 'pdf')
         q.order = int(request.form.get('order', 0))
         db.session.commit()
+        department = Department.query.get(current_user.department_id)
+        ActionLog.log(
+            action='update_question',
+            area='questions',
+            details={'question_id': q.id, 'department': department.name if department else 'Unknown'}
+        )
         flash('Question updated!', 'success')
         return redirect(url_for('dept.questions'))
     
@@ -321,7 +353,13 @@ def delete_question(q_id):
         flash('Access denied.', 'error')
         return redirect(url_for('dept.questions'))
     
+    department = Department.query.get(current_user.department_id)
     db.session.delete(q)
     db.session.commit()
+    ActionLog.log(
+        action='delete_question',
+        area='questions',
+        details={'question_id': q_id, 'department': department.name if department else 'Unknown'}
+    )
     flash('Question deleted.', 'success')
     return redirect(url_for('dept.questions'))

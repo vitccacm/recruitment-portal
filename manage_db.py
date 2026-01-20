@@ -10,7 +10,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app import create_app
-from app.models import db, Membership
+from app.models import db, Membership, ActionLog
 
 
 def print_header():
@@ -27,7 +27,8 @@ def print_menu():
     print("  4. Reset database (DANGEROUS - drops all tables)")
     print("  5. Change Super Admin credentials")
     print("  6. Initialize database (first-time setup)")
-    print("  7. Sync/Migrate all tables (add missing tables)")
+    print("  7. Sync/Migrate all tables (adds missing tables & columns)")
+    print("  8. View Action Logs summary")
     print("  0. Exit")
     print()
 
@@ -529,6 +530,67 @@ def sync_migrate_tables(app):
 
 
 
+def view_action_logs(app):
+    """View action logs summary"""
+    print("\n--- Action Logs Summary ---")
+    
+    with app.app_context():
+        from sqlalchemy import text, func
+        from datetime import datetime, timedelta
+        
+        try:
+            # Check if table exists
+            from sqlalchemy import inspect
+            inspector = inspect(db.engine)
+            if 'action_logs' not in inspector.get_table_names():
+                print("⚠️  action_logs table doesn't exist. Run option 7 to create it.")
+                return
+            
+            # Get total count
+            total = ActionLog.query.count()
+            print(f"\nTotal logs: {total}")
+            
+            if total == 0:
+                print("No action logs recorded yet.")
+                return
+            
+            # Get today's count
+            today = datetime.utcnow().date()
+            today_count = ActionLog.query.filter(func.date(ActionLog.timestamp) == today).count()
+            print(f"Today's actions: {today_count}")
+            
+            # Get actions by area
+            print("\n--- Actions by Area ---")
+            areas = db.session.query(
+                ActionLog.area, func.count(ActionLog.id)
+            ).group_by(ActionLog.area).all()
+            
+            for area, count in sorted(areas, key=lambda x: -x[1]):
+                print(f"  {area or 'unknown': <20} {count}")
+            
+            # Get actions by type
+            print("\n--- Top 10 Actions ---")
+            actions = db.session.query(
+                ActionLog.action, func.count(ActionLog.id)
+            ).group_by(ActionLog.action).order_by(func.count(ActionLog.id).desc()).limit(10).all()
+            
+            for action, count in actions:
+                print(f"  {action or 'unknown': <30} {count}")
+            
+            # Get most recent logs
+            print("\n--- Last 10 Actions ---")
+            recent = ActionLog.query.order_by(ActionLog.timestamp.desc()).limit(10).all()
+            
+            print(f"{'Time': <20} {'User': <25} {'Area': <15} {'Action'}")
+            print("-" * 80)
+            for log in recent:
+                time_str = log.timestamp.strftime('%Y-%m-%d %H:%M') if log.timestamp else 'N/A'
+                print(f"{time_str: <20} {(log.user_email or 'system'): <25} {log.area: <15} {log.action}")
+            
+        except Exception as e:
+            print(f"Error reading action logs: {e}")
+
+
 def main():
     app = create_app()
     
@@ -538,7 +600,7 @@ def main():
         print_menu()
         
         try:
-            choice = input("Enter choice (0-7): ").strip()
+            choice = input("Enter choice (0-8): ").strip()
         except (KeyboardInterrupt, EOFError):
             print("\n\nExiting...")
             break
@@ -560,6 +622,8 @@ def main():
             initialize_database(app)
         elif choice == '7':
             sync_migrate_tables(app)
+        elif choice == '8':
+            view_action_logs(app)
         else:
             print("Invalid choice. Please try again.")
 
