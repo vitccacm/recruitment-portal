@@ -7,7 +7,7 @@ from authlib.integrations.flask_client import OAuth
 import firebase_admin
 from firebase_admin import credentials, auth as firebase_auth
 from . import bp
-from ..models import db, Student, SiteSettings
+from ..models import db, Student, SiteSettings, PageVisit
 from .. import csrf
 import os
 from functools import wraps
@@ -203,6 +203,7 @@ def login():
             return redirect(url_for('student.dashboard'))
         return redirect(url_for('admin.dashboard'))
     
+    PageVisit.track('Login Page')
     auth_settings = get_auth_settings()
     return render_template('auth/login.html', auth_settings=auth_settings)
 
@@ -223,6 +224,7 @@ def register():
     if current_user.is_authenticated:
         return redirect(url_for('student.dashboard'))
     
+    PageVisit.track('Register Page')
     form = RegisterForm()
     
     if form.validate_on_submit():

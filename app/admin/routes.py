@@ -8,7 +8,7 @@ from functools import wraps
 from werkzeug.utils import secure_filename
 from . import bp
 from .forms import LoginForm, DepartmentCreateForm, DepartmentEditForm, AccountForm, RoundForm
-from ..models import db, Admin, Department, Application, Student, Round, RoundDepartment, RoundCandidate, SiteSettings, ProfileField, DepartmentQuestion, Membership, QuestionResponse, ActionLog
+from ..models import db, Admin, Department, Application, Student, Round, RoundDepartment, RoundCandidate, SiteSettings, ProfileField, DepartmentQuestion, Membership, QuestionResponse, ActionLog, PageVisit
 
 
 def admin_required(f):
@@ -216,6 +216,24 @@ def api_analytics():
         ).count(),
     }
     
+    # Page Visit Stats
+    total_visits = PageVisit.query.count()
+    visits_today = PageVisit.query.filter(func.date(PageVisit.timestamp) == today).count()
+    visits_week = PageVisit.query.filter(PageVisit.timestamp >= datetime.combine(week_ago, datetime.min.time())).count()
+    
+    # Top pages visited
+    top_pages = db.session.query(
+        PageVisit.page_name,
+        func.count(PageVisit.id)
+    ).group_by(PageVisit.page_name).order_by(func.count(PageVisit.id).desc()).limit(10).all()
+    
+    page_visits = {
+        'total': total_visits,
+        'today': visits_today,
+        'this_week': visits_week,
+        'top_pages': [{'page': p[0], 'count': p[1]} for p in top_pages]
+    }
+    
     return jsonify({
         'overview': overview,
         'applications_by_dept': applications_by_dept,
@@ -225,6 +243,7 @@ def api_analytics():
         'membership_stats': membership_stats,
         'student_stats': student_stats,
         'log_stats': log_stats,
+        'page_visits': page_visits,
     })
 
 @bp.route('/departments')

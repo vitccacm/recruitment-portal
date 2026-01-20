@@ -5,7 +5,7 @@ from werkzeug.utils import secure_filename
 import os
 from . import bp
 from .forms import ProfileForm, ApplicationForm
-from ..models import db, Student, Department, Application, Round, RoundDepartment, RoundCandidate, DepartmentQuestion, QuestionResponse, ProfileField
+from ..models import db, Student, Department, Application, Round, RoundDepartment, RoundCandidate, DepartmentQuestion, QuestionResponse, ProfileField, PageVisit
 
 
 def student_required(f):
@@ -35,6 +35,7 @@ def profile_complete_required(f):
 @student_required
 def dashboard():
     """Student dashboard"""
+    PageVisit.track('Student Dashboard')
     recent_applications = current_user.applications.order_by(Application.applied_at.desc()).limit(5).all()
     open_departments = Department.query.filter_by(is_active=True).count()
     return render_template('student/dashboard.html', 
@@ -47,6 +48,7 @@ def dashboard():
 @student_required
 def profile():
     """View and edit profile"""
+    PageVisit.track('Student Profile')
     form = ProfileForm()
     custom_fields = ProfileField.query.filter_by(is_enabled=True).order_by(ProfileField.order).all()
     
@@ -97,6 +99,7 @@ def profile():
 @student_required
 def departments():
     """View all departments"""
+    PageVisit.track('Student Departments')
     departments = Department.query.filter_by(is_active=True).order_by(Department.created_at.desc()).all()
     
     # Get departments user has already applied to
@@ -221,6 +224,7 @@ def apply(dept_id):
 @student_required
 def applications():
     """View my applications"""
+    PageVisit.track('My Applications')
     applications = current_user.applications.order_by(Application.applied_at.desc()).all()
     return render_template('student/applications.html', applications=applications)
 

@@ -10,7 +10,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app import create_app
-from app.models import db, Membership, ActionLog
+from app.models import db, Membership, ActionLog, PageVisit
 
 
 def print_header():

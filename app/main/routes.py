@@ -1,12 +1,13 @@
 from flask import render_template, request, jsonify
 from . import bp
-from ..models import Department, Membership, db
+from ..models import Department, Membership, db, PageVisit
 from .. import csrf
 
 
 @bp.route('/')
 def index():
     """Landing page with department overview"""
+    PageVisit.track('Homepage')
     departments = Department.query.filter_by(is_active=True).order_by(Department.created_at.desc()).all()
     return render_template('main/index.html', departments=departments)
 
@@ -14,6 +15,7 @@ def index():
 @bp.route('/departments')
 def departments():
     """View all departments (public)"""
+    PageVisit.track('Departments List')
     departments = Department.query.order_by(Department.created_at.desc()).all()
     return render_template('main/departments.html', departments=departments)
 
@@ -22,12 +24,14 @@ def departments():
 def department_detail(dept_id):
     """View department details (public)"""
     department = Department.query.get_or_404(dept_id)
+    PageVisit.track(f'Department: {department.name}')
     return render_template('main/department_detail.html', department=department)
 
 
 @bp.route('/membership')
 def membership():
     """View membership information"""
+    PageVisit.track('Membership Page')
     return render_template('main/membership.html')
 
 

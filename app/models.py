@@ -376,3 +376,42 @@ class ActionLog(db.Model):
         db.session.add(log_entry)
         db.session.commit()
         return log_entry
+
+
+class PageVisit(db.Model):
+    """Track page visits for analytics"""
+    __tablename__ = 'page_visits'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    page_name = db.Column(db.String(100), nullable=False, index=True)
+    user_type = db.Column(db.String(20))  # 'admin', 'student', 'anonymous'
+    user_id = db.Column(db.Integer)
+    ip_address = db.Column(db.String(45))
+    
+    @staticmethod
+    def track(page_name):
+        """Helper to track a page visit"""
+        from flask_login import current_user
+        from flask import request
+        
+        visit = PageVisit(
+            page_name=page_name,
+            ip_address=request.remote_addr if request else None
+        )
+        
+        # Determine user info
+        if current_user and current_user.is_authenticated:
+            user_id = current_user.get_id()
+            if user_id.startswith('admin_'):
+                visit.user_type = 'admin'
+                visit.user_id = int(user_id.replace('admin_', ''))
+            else:
+                visit.user_type = 'student'
+                visit.user_id = int(user_id.replace('student_', ''))
+        else:
+            visit.user_type = 'anonymous'
+        
+        db.session.add(visit)
+        db.session.commit()
+        return visit
