@@ -24,7 +24,7 @@
 </div>
 
 <!-- Filter Tabs -->
-<div style="display: flex; gap: 0; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border-color);">
+<div style="display: flex; gap: 0; margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); flex-wrap: wrap;">
     <a href="{{ url_for('admin.students', status='all') }}"
         style="padding: 0.75rem 1.5rem; text-decoration: none; font-weight: 500; transition: all 0.2s;
                {% if current_status == 'all' %}color: var(--acm-blue); border-bottom: 2px solid var(--acm-blue); margin-bottom: -2px;
@@ -43,7 +43,67 @@
                {% else %}color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -2px;{% endif %}">
         ⏳ Incomplete ({{ counts.incomplete }})
     </a>
+    <a href="{{ url_for('admin.students', status='no_app') }}"
+        style="padding: 0.75rem 1.5rem; text-decoration: none; font-weight: 500; transition: all 0.2s;
+               {% if current_status in ['no_app', 'complete_no_app', 'incomplete_no_app'] %}color: var(--error); border-bottom: 2px solid var(--error); margin-bottom: -2px;
+               {% else %}color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -2px;{% endif %}">
+        📭 No Applications ({{ counts.complete_no_app + counts.incomplete_no_app }})
+    </a>
 </div>
+
+<!-- Sub-filter buttons for No Applications tab -->
+{% if current_status in ['no_app', 'complete_no_app', 'incomplete_no_app'] %}
+<div style="display: flex; gap: 0.75rem; margin-bottom: 1.5rem; flex-wrap: wrap;">
+    <a href="{{ url_for('admin.students', status='no_app') }}"
+        class="btn {% if current_status == 'no_app' %}{% else %}btn-secondary{% endif %}"
+        style="{% if current_status == 'no_app' %}background: var(--acm-blue); border-color: var(--acm-blue);{% endif %}">
+        All ({{ counts.complete_no_app + counts.incomplete_no_app }})
+    </a>
+    <a href="{{ url_for('admin.students', status='complete_no_app') }}"
+        class="btn {% if current_status == 'complete_no_app' %}{% else %}btn-secondary{% endif %}"
+        style="{% if current_status == 'complete_no_app' %}background: var(--success); border-color: var(--success);{% endif %}">
+        ✓ Complete Profile ({{ counts.complete_no_app }})
+    </a>
+    <a href="{{ url_for('admin.students', status='incomplete_no_app') }}"
+        class="btn {% if current_status == 'incomplete_no_app' %}{% else %}btn-secondary{% endif %}"
+        style="{% if current_status == 'incomplete_no_app' %}background: var(--warning); border-color: var(--warning);{% endif %}">
+        ⏳ Incomplete Profile ({{ counts.incomplete_no_app }})
+    </a>
+</div>
+{% endif %}
+
+<!-- Copy Emails Button -->
+<div style="margin-bottom: 1.5rem; display: flex; justify-content: flex-end;">
+    <button type="button" onclick="copyAllEmails()" class="btn btn-secondary"
+        style="padding: 0.5rem 1rem; font-size: 0.85rem;">
+        📋 Copy All Emails ({{ students|length }})
+    </button>
+</div>
+
+<script>
+    function copyAllEmails() {
+        const emails = [
+            {% for s in students %}
+    "{{ s.email }}"{% if not loop.last %}, {% endif %}
+    {% endfor %}
+    ];
+    const emailString = emails.join(',');
+    navigator.clipboard.writeText(emailString).then(() => {
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = '✓ Copied!';
+        btn.style.background = 'var(--success)';
+        btn.style.borderColor = 'var(--success)';
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.background = '';
+            btn.style.borderColor = '';
+        }, 2000);
+    }).catch(err => {
+        alert('Failed to copy emails: ' + err);
+    });
+}
+</script>
 
 {% if students %}
 <!-- Students Table -->

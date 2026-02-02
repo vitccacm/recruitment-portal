@@ -1122,17 +1122,27 @@ def students():
     """View all signed up students"""
     status_filter = request.args.get('status', 'all')
     
-    query = Student.query
-    
-    # Filter based on profile completion
+    # Get all students and categorize them
     all_students = Student.query.all()
+    
+    # Profile completion categories
     complete_students = [s for s in all_students if s.profile_completion >= 75]
     incomplete_students = [s for s in all_students if s.profile_completion < 75]
+    
+    # No application categories
+    complete_no_app = [s for s in all_students if s.profile_completion >= 75 and s.applications.count() == 0]
+    incomplete_no_app = [s for s in all_students if s.profile_completion < 75 and s.applications.count() == 0]
     
     if status_filter == 'complete':
         students = complete_students
     elif status_filter == 'incomplete':
         students = incomplete_students
+    elif status_filter == 'no_app':
+        students = complete_no_app + incomplete_no_app
+    elif status_filter == 'complete_no_app':
+        students = complete_no_app
+    elif status_filter == 'incomplete_no_app':
+        students = incomplete_no_app
     else:
         students = all_students
     
@@ -1142,7 +1152,9 @@ def students():
     counts = {
         'total': len(all_students),
         'complete': len(complete_students),
-        'incomplete': len(incomplete_students)
+        'incomplete': len(incomplete_students),
+        'complete_no_app': len(complete_no_app),
+        'incomplete_no_app': len(incomplete_no_app)
     }
     
     return render_template('admin/students.html', 
