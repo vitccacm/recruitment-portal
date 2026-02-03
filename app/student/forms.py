@@ -19,6 +19,10 @@ BRANCH_CHOICES = [
     ('FT', 'B.Tech Fashion Technology'),
     ('EEE', 'B.Tech. Electrical and Electronics Engineering'),
     ('ECS', 'B.Tech. Electrical and Computer Science Engineering'),
+    ('MIS', 'M.Tech Software Engineering'),
+    ('MDS', 'M.Tech CSE Data Science'),
+    ('MBS', 'M.Tech CSE Business Analytics'),
+
 ]
 
 BATCH_CHOICES = [
