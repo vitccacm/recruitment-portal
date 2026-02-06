@@ -22,6 +22,7 @@ BRANCH_CHOICES = [
     ('MIS', 'M.Tech Software Engineering'),
     ('MDS', 'M.Tech CSE Data Science'),
     ('MBS', 'M.Tech CSE Business Analytics'),
+    ('OTH', 'Other')
 
 ]
 
