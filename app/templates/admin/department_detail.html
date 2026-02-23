@@ -82,10 +82,16 @@
     <div class="flex justify-between items-center mb-lg">
         <h3>Applications</h3>
         {% if applications %}
-        <a href="{{ url_for('admin.export_department_applications', dept_id=department.id) }}" class="btn btn-primary btn-sm" style="display: inline-flex; align-items: center; gap: 0.4rem;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <button onclick="downloadExcel()" id="downloadBtn" class="btn btn-primary btn-sm"
+            style="display: inline-flex; align-items: center; gap: 0.4rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
             Download Excel
-        </a>
+        </button>
         {% endif %}
     </div>
 
@@ -139,4 +145,57 @@
     <p class="text-muted">No applications yet.</p>
     {% endif %}
 </div>
+
+<!-- SheetJS library for client-side Excel generation -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script>
+    function downloadExcel() {
+        var btn = document.getElementById('downloadBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:spin 1s linear infinite"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg> Downloading...';
+
+        fetch("{{ url_for('admin.export_department_data', dept_id=department.id) }}")
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                var wsData = [data.headers].concat(data.rows);
+                var ws = XLSX.utils.aoa_to_sheet(wsData);
+
+                // Style header row to be bold (set column widths)
+                var colWidths = data.headers.map(function (h) {
+                    var maxLen = h.length;
+                    data.rows.forEach(function (row) {
+                        var idx = data.headers.indexOf(h);
+                        if (row[idx] && String(row[idx]).length > maxLen) {
+                            maxLen = String(row[idx]).length;
+                        }
+                    });
+                    return { wch: Math.min(maxLen + 4, 50) };
+                });
+                ws['!cols'] = colWidths;
+
+                var wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, data.department.substring(0, 31));
+                XLSX.writeFile(wb, data.department.replace(/ /g, '_') + '_applications.xlsx');
+
+                btn.disabled = false;
+                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download Excel';
+            })
+            .catch(function (err) {
+                alert('Error downloading: ' + err.message);
+                btn.disabled = false;
+                btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Download Excel';
+            });
+    }
+</script>
+<style>
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>
 {% endblock %}
