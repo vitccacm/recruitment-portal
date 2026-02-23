@@ -1,11 +1,12 @@
 import os
+import json
 from flask import render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_required, current_user
 from functools import wraps
 from werkzeug.utils import secure_filename
 from . import bp
 from ..admin.forms import DepartmentEditForm
-from ..models import db, Admin, Department, Application, Round, RoundDepartment, RoundCandidate, DepartmentQuestion, ActionLog
+from ..models import db, Admin, Department, Application, Round, RoundDepartment, RoundCandidate, DepartmentQuestion, ActionLog, ProfileField, QuestionResponse
 
 
 def dept_admin_required(f):
@@ -67,6 +68,81 @@ def applications():
                          department=department,
                          applications=applications,
                          current_status=status_filter)
+
+
+@bp.route('/applications/export-data')
+@login_required
+@dept_admin_required
+def export_department_data():
+    """Return all application data for this department as JSON (for client-side Excel generation)"""
+    from flask import jsonify
+
+    department = Department.query.get(current_user.department_id)
+    if not department:
+        return jsonify({'error': 'Department not found'}), 404
+
+    applications = Application.query.filter_by(department_id=department.id).order_by(Application.applied_at.desc()).all()
+
+    # Get all enabled profile fields (extra questions)
+    profile_fields = ProfileField.query.filter_by(is_enabled=True).order_by(ProfileField.order).all()
+
+    # Get department-specific questions
+    dept_questions = DepartmentQuestion.query.filter_by(department_id=department.id).order_by(DepartmentQuestion.order).all()
+
+    # Build headers
+    base_headers = ['Name', 'Email', 'Reg No', 'Phone', 'Branch', 'Batch', 'Position', 'Cover Letter', 'Status', 'Applied At']
+    profile_headers = [pf.label for pf in profile_fields]
+    question_headers = [q.question_text for q in dept_questions]
+
+    # Build rows
+    rows = []
+    for app in applications:
+        student = app.student
+
+        # Parse extra_data for profile fields
+        extra_data = {}
+        if student.extra_data:
+            try:
+                extra_data = eval(student.extra_data)
+            except Exception:
+                try:
+                    extra_data = json.loads(student.extra_data)
+                except Exception:
+                    extra_data = {}
+
+        # Build question response lookup
+        response_map = {}
+        for qr in app.question_responses:
+            response_map[qr.question_id] = qr.response_text or qr.file_path or ''
+
+        row = [
+            student.name or '',
+            student.email or '',
+            student.reg_no or '',
+            student.phone or '',
+            student.branch or '',
+            student.batch or '',
+            app.position or '',
+            app.cover_letter or '',
+            app.status or '',
+            app.applied_at.strftime('%Y-%m-%d %H:%M') if app.applied_at else '',
+        ]
+
+        # Add profile field values
+        for pf in profile_fields:
+            row.append(extra_data.get(pf.field_name, ''))
+
+        # Add department question responses
+        for q in dept_questions:
+            row.append(response_map.get(q.id, ''))
+
+        rows.append(row)
+
+    return jsonify({
+        'department': department.name,
+        'headers': base_headers + profile_headers + question_headers,
+        'rows': rows
+    })
 
 
 @bp.route('/department')
