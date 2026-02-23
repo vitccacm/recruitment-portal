@@ -312,6 +312,125 @@ def department_detail(dept_id):
     return render_template('admin/department_detail.html', department=department, applications=applications)
 
 
+@bp.route('/department/<int:dept_id>/export')
+@login_required
+@super_admin_required
+def export_department_applications(dept_id):
+    """Export all applications for a department as an Excel file"""
+    from io import BytesIO
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from flask import send_file
+
+    department = Department.query.get_or_404(dept_id)
+    applications = Application.query.filter_by(department_id=dept_id).order_by(Application.applied_at.desc()).all()
+
+    # Get all enabled profile fields (extra questions)
+    profile_fields = ProfileField.query.filter_by(is_enabled=True).order_by(ProfileField.order).all()
+
+    # Get department-specific questions
+    dept_questions = DepartmentQuestion.query.filter_by(department_id=dept_id).order_by(DepartmentQuestion.order).all()
+
+    # Build workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = department.name[:31]  # Excel sheet name max 31 chars
+
+    # --- Header row ---
+    base_headers = ['Name', 'Email', 'Reg No', 'Phone', 'Branch', 'Batch', 'Position', 'Cover Letter', 'Status', 'Applied At']
+    profile_headers = [pf.label for pf in profile_fields]
+    question_headers = [q.question_text for q in dept_questions]
+
+    all_headers = base_headers + profile_headers + question_headers
+    ws.append(all_headers)
+
+    # Style header row
+    header_fill = PatternFill(start_color='1a1a2e', end_color='1a1a2e', fill_type='solid')
+    header_font = Font(bold=True, color='FFFFFF', size=11)
+    thin_border = Border(
+        bottom=Side(style='thin', color='444444')
+    )
+    for col_num, cell in enumerate(ws[1], 1):
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.border = thin_border
+
+    # --- Data rows ---
+    for app in applications:
+        student = app.student
+
+        # Parse extra_data for profile fields
+        extra_data = {}
+        if student.extra_data:
+            try:
+                extra_data = eval(student.extra_data)
+            except Exception:
+                try:
+                    extra_data = json.loads(student.extra_data)
+                except Exception:
+                    extra_data = {}
+
+        # Build question response lookup {question_id: response_text}
+        response_map = {}
+        for qr in app.question_responses:
+            response_map[qr.question_id] = qr.response_text or qr.file_path or ''
+
+        row = [
+            student.name or '',
+            student.email or '',
+            student.reg_no or '',
+            student.phone or '',
+            student.branch or '',
+            student.batch or '',
+            app.position or '',
+            app.cover_letter or '',
+            app.status or '',
+            app.applied_at.strftime('%Y-%m-%d %H:%M') if app.applied_at else '',
+        ]
+
+        # Add profile field values
+        for pf in profile_fields:
+            row.append(extra_data.get(pf.field_name, ''))
+
+        # Add department question responses
+        for q in dept_questions:
+            row.append(response_map.get(q.id, ''))
+
+        ws.append(row)
+
+    # Auto-fit column widths (approximate)
+    for col in ws.columns:
+        max_length = 0
+        col_letter = col[0].column_letter
+        for cell in col:
+            try:
+                if cell.value:
+                    max_length = max(max_length, len(str(cell.value)))
+            except Exception:
+                pass
+        ws.column_dimensions[col_letter].width = min(max_length + 4, 50)
+
+    # Save to bytes
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    filename = f"{department.name.replace(' ', '_')}_applications.xlsx"
+
+    ActionLog.log(
+        action='export_department_applications',
+        area='departments',
+        details={'department_id': dept_id, 'name': department.name, 'count': len(applications)}
+    )
+
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name=filename,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+
 @bp.route('/departments/edit/<int:dept_id>', methods=['GET', 'POST'])
 @login_required
 @super_admin_required
