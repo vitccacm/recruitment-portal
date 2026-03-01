@@ -1,6 +1,6 @@
 from flask import render_template, request, jsonify
 from . import bp
-from ..models import Department, Membership, db, PageVisit
+from ..models import Department, Membership, SiteSettings, db, PageVisit
 from .. import csrf
 
 
@@ -8,13 +8,21 @@ from .. import csrf
 def index():
     """Landing page with department overview"""
     PageVisit.track('Homepage')
-    departments = Department.query.filter_by(is_active=True).order_by(Department.created_at.desc()).all()
+    if SiteSettings.get_bool('departments_visible', True):
+        departments = Department.query.filter_by(is_active=True).order_by(Department.created_at.desc()).all()
+    else:
+        departments = []
     return render_template('main/index.html', departments=departments)
 
 
 @bp.route('/departments')
 def departments():
     """View all departments (public)"""
+    if not SiteSettings.get_bool('departments_visible', True):
+        from flask import flash, redirect, url_for
+        flash('Department listings are currently unavailable.', 'info')
+        return redirect(url_for('main.index'))
+        
     PageVisit.track('Departments List')
     departments = Department.query.order_by(Department.created_at.desc()).all()
     return render_template('main/departments.html', departments=departments)
@@ -23,6 +31,11 @@ def departments():
 @bp.route('/department/<int:dept_id>')
 def department_detail(dept_id):
     """View department details (public)"""
+    if not SiteSettings.get_bool('departments_visible', True):
+        from flask import flash, redirect, url_for
+        flash('Department pages are currently unavailable.', 'info')
+        return redirect(url_for('main.index'))
+        
     department = Department.query.get_or_404(dept_id)
     PageVisit.track(f'Department: {department.name}')
     return render_template('main/department_detail.html', department=department)

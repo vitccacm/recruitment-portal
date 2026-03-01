@@ -24,11 +24,14 @@
             <a href="{{ url_for('main.membership') }}" class="btn btn-membership btn-lg">
                 Get Membership
             </a>
+            {% if departments_visible %}
             <a href="{{ url_for('main.departments') }}" class="btn btn-secondary btn-lg">View Departments</a>
+            {% endif %}
         </div>
     </div>
 </section>
 
+{% if departments_visible %}
 <!-- Departments Preview -->
 <section class="page">
     <div class="container">
@@ -81,6 +84,7 @@
         {% endif %}
     </div>
 </section>
+{% endif %}
 
 <!-- Membership CTA Section -->
 <section class="page">

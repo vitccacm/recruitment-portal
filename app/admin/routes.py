@@ -898,6 +898,7 @@ def settings():
         SiteSettings.set('allow_google', 'true' if request.form.get('allow_google') else 'false')
         SiteSettings.set('allow_email', 'true' if request.form.get('allow_email') else 'false')
         SiteSettings.set('allowed_domains', request.form.get('allowed_domains', '').strip())
+        SiteSettings.set('departments_visible', 'true' if request.form.get('departments_visible') else 'false')
         
         ActionLog.log(
             action='update_settings',
@@ -906,7 +907,8 @@ def settings():
                 'allow_signup': request.form.get('allow_signup') is not None,
                 'allow_google': request.form.get('allow_google') is not None,
                 'allow_email': request.form.get('allow_email') is not None,
-                'allowed_domains': request.form.get('allowed_domains', '').strip()
+                'allowed_domains': request.form.get('allowed_domains', '').strip(),
+                'departments_visible': request.form.get('departments_visible') is not None
             }
         )
         
@@ -919,6 +921,7 @@ def settings():
         'allow_google': SiteSettings.get_bool('allow_google', True),
         'allow_email': SiteSettings.get_bool('allow_email', True),
         'allowed_domains': SiteSettings.get('allowed_domains', ''),
+        'departments_visible': SiteSettings.get_bool('departments_visible', True),
     }
     
     return render_template('admin/settings.html', settings=current_settings)

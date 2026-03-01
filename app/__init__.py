@@ -42,6 +42,14 @@ def create_app(config_class=Config):
     # Ensure upload folder exists
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     
+    # Inject site settings globally to templates
+    @app.context_processor
+    def inject_settings():
+        from .models import SiteSettings
+        return {
+            'departments_visible': SiteSettings.get_bool('departments_visible', True)
+        }
+    
     # Register blueprints
     from .auth import bp as auth_bp
     app.register_blueprint(auth_bp, url_prefix='/auth')

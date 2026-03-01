@@ -54,9 +54,11 @@
                 <a href="{{ url_for('student.profile') }}" class="btn btn-secondary">
                     Edit Profile
                 </a>
+                {% if departments_visible %}
                 <a href="{{ url_for('student.departments') }}" class="btn btn-primary">
                     Browse Departments
                 </a>
+                {% endif %}
                 <a href="{{ url_for('student.applications') }}" class="btn btn-secondary">
                     My Applications
                 </a>

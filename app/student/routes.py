@@ -5,8 +5,7 @@ from werkzeug.utils import secure_filename
 import os
 from . import bp
 from .forms import ProfileForm, ApplicationForm
-from ..models import db, Student, Department, Application, Round, RoundDepartment, RoundCandidate, DepartmentQuestion, QuestionResponse, ProfileField, PageVisit
-
+from ..models import db, Student, Department, Application, Round, RoundDepartment, RoundCandidate, DepartmentQuestion, QuestionResponse, ProfileField, PageVisit, SiteSettings
 
 def student_required(f):
     """Decorator to ensure user is a student"""
@@ -37,7 +36,7 @@ def dashboard():
     """Student dashboard"""
     PageVisit.track('Student Dashboard')
     recent_applications = current_user.applications.order_by(Application.applied_at.desc()).limit(5).all()
-    open_departments = Department.query.filter_by(is_active=True).count()
+    open_departments = Department.query.filter_by(is_active=True).count() if SiteSettings.get_bool('departments_visible', True) else 0
     return render_template('student/dashboard.html', 
                          recent_applications=recent_applications,
                          open_departments=open_departments)
@@ -99,6 +98,10 @@ def profile():
 @student_required
 def departments():
     """View all departments"""
+    if not SiteSettings.get_bool('departments_visible', True):
+        flash('Department listings are currently unavailable.', 'info')
+        return redirect(url_for('student.dashboard'))
+        
     PageVisit.track('Student Departments')
     departments = Department.query.filter_by(is_active=True).order_by(Department.created_at.desc()).all()
     
@@ -115,6 +118,10 @@ def departments():
 @student_required
 def department_detail(dept_id):
     """View department details"""
+    if not SiteSettings.get_bool('departments_visible', True):
+        flash('Department pages are currently unavailable.', 'info')
+        return redirect(url_for('student.dashboard'))
+        
     department = Department.query.get_or_404(dept_id)
     existing_application = Application.query.filter_by(
         student_id=current_user.id,
@@ -131,6 +138,10 @@ def department_detail(dept_id):
 @profile_complete_required
 def apply(dept_id):
     """Apply to a department"""
+    if not SiteSettings.get_bool('departments_visible', True):
+        flash('Applications are currently closed.', 'info')
+        return redirect(url_for('student.dashboard'))
+        
     department = Department.query.get_or_404(dept_id)
     
     # Check if already applied

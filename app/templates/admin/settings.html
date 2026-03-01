@@ -29,6 +29,20 @@
             Students must use their VIT student email when signing in with Google.
         </div>
 
+        <h3 class="mt-xl mb-lg">Portal Settings</h3>
+
+        <div class="form-group">
+            <label class="switch">
+                <input type="checkbox" name="departments_visible" {% if settings.departments_visible %}checked{% endif
+                    %}>
+                <span class="switch-slider"></span>
+            </label>
+            <span style="margin-left: 1rem;"><strong>Show Departments Globally</strong></span>
+            <p class="text-muted mt-sm" style="font-size: 0.8rem; margin-left: 3.5rem;">
+                When disabled, department pages and listings on the homepage are hidden. Applicants can still login.
+            </p>
+        </div>
+
         <button type="submit" class="btn btn-primary btn-lg mt-lg">Save Settings</button>
     </div>
 </form>
